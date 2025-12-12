@@ -7,8 +7,11 @@ import { Input } from "../../components/ui/Input";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useTranslation } from "react-i18next";
 
 export default function CreateDogScreen() {
+    const { t, i18n } = useTranslation();
+    const dateLocale = i18n.language === 'hu' ? 'hu-HU' : 'en-US';
     const [name, setName] = useState("");
     const [breed, setBreed] = useState("");
     const [age, setAge] = useState("");
@@ -23,7 +26,7 @@ export default function CreateDogScreen() {
 
     async function handleCreate() {
         if (!name || !breed || !age) {
-            Alert.alert("Error", "Please fill in all required fields (Name, Breed, Age)");
+            Alert.alert(t('common.error'), t('dog.error_required'));
             return;
         }
 
@@ -49,7 +52,7 @@ export default function CreateDogScreen() {
 
             router.replace("/");
         } catch (error: any) {
-            Alert.alert("Error", error.message);
+            Alert.alert(t('common.error'), error.message);
         } finally {
             setLoading(false);
         }
@@ -81,7 +84,7 @@ export default function CreateDogScreen() {
                         <Ionicons name="arrow-back" size={24} color="white" />
                     </TouchableOpacity>
                     <Text className="text-white text-lg font-semibold flex-1 text-center mr-14">
-                        Add New Dog
+                        {t('dog.add_new')}
                     </Text>
                 </View>
             </View>
@@ -94,19 +97,19 @@ export default function CreateDogScreen() {
                 <ScrollView className="flex-1 p-6" contentContainerStyle={{ paddingBottom: 100 }}>
                     <View className="mt-4">
                         <Text className="text-white text-xl font-bold mb-6">
-                            Tell us about your furry friend
+                            {t('dog.create_title')}
                         </Text>
 
                         <Input
-                            label="Name *"
-                            placeholder="Buddy"
+                            label={t('dog.name') + " *"}
+                            placeholder={t('dog.name_placeholder')}
                             value={name}
                             onChangeText={setName}
                         />
 
                         <Input
-                            label="Breed *"
-                            placeholder="Golden Retriever"
+                            label={t('dog.breed') + " *"}
+                            placeholder={t('dog.breed_placeholder')}
                             value={breed}
                             onChangeText={setBreed}
                         />
@@ -114,7 +117,7 @@ export default function CreateDogScreen() {
                         <View className="flex-row space-x-4">
                             <View className="flex-1">
                                 <Input
-                                    label="Age (months) *"
+                                    label={t('dog.age_label')}
                                     placeholder="12"
                                     value={age}
                                     onChangeText={setAge}
@@ -123,7 +126,7 @@ export default function CreateDogScreen() {
                             </View>
                             <View className="flex-1">
                                 <Input
-                                    label="Weight (kg)"
+                                    label={t('dog.weight_label')}
                                     placeholder="25"
                                     value={weight}
                                     onChangeText={setWeight}
@@ -133,14 +136,14 @@ export default function CreateDogScreen() {
                         </View>
 
                         <View className="mb-4 space-y-2">
-                            <Text className="text-gray-400 text-sm font-medium ml-1">Birthday</Text>
+                            <Text className="text-gray-400 text-sm font-medium ml-1">{t('dog.birthday')}</Text>
                             {!showDatePicker || Platform.OS === 'android' ? (
                                 <TouchableOpacity
                                     onPress={() => setShowDatePicker(true)}
                                     className="h-14 bg-gray-800/50 border border-gray-700 rounded-2xl px-4 justify-center"
                                 >
                                     <Text className={`text-base ${birthday ? 'text-white' : 'text-gray-500'}`}>
-                                        {birthday ? birthday.toLocaleDateString() : 'Select Date'}
+                                        {birthday ? birthday.toLocaleDateString(dateLocale) : t('dog.select_date')}
                                     </Text>
                                 </TouchableOpacity>
                             ) : null}
@@ -161,7 +164,7 @@ export default function CreateDogScreen() {
                                             onPress={() => setShowDatePicker(false)}
                                             className="bg-indigo-600 py-3 rounded-xl items-center mt-4"
                                         >
-                                            <Text className="text-white font-bold">Done</Text>
+                                            <Text className="text-white font-bold">{t('common.done')}</Text>
                                         </TouchableOpacity>
                                     )}
                                 </View>
@@ -169,37 +172,37 @@ export default function CreateDogScreen() {
                         </View>
 
                         <Input
-                            label="Favorite Treat"
-                            placeholder="Chicken, Cheese..."
+                            label={t('dog.favorite_treat')}
+                            placeholder={t('dog.treat_placeholder')}
                             value={favoriteTreat}
                             onChangeText={setFavoriteTreat}
                         />
 
                         <View className="mb-6">
-                            <Text className="text-gray-400 text-sm font-medium ml-1 mb-2">Gender</Text>
-                            <View className="flex-row space-x-4">
+                            <Text className="text-gray-400 text-sm font-medium ml-1 mb-2">{t('dog.gender')}</Text>
+                            <View className="flex-row space-x-3">
                                 <TouchableOpacity
                                     onPress={() => setGender("Male")}
-                                    className={`flex-1 h-14 rounded-2xl items-center justify-center ${gender === "Male" ? "bg-indigo-600" : "bg-gray-800 border border-gray-700"
+                                    className={`flex-1 h-11 rounded-xl items-center justify-center ${gender === "Male" ? "bg-indigo-600" : "bg-gray-800 border border-gray-700"
                                         }`}
                                 >
-                                    <Text className={`font-bold text-lg ${gender === "Male" ? "text-white" : "text-gray-400"
-                                        }`}>Male</Text>
+                                    <Text className={`font-semibold text-sm ${gender === "Male" ? "text-white" : "text-gray-400"
+                                        }`}>{t('dog.male')}</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
                                     onPress={() => setGender("Female")}
-                                    className={`flex-1 h-14 rounded-2xl items-center justify-center ${gender === "Female" ? "bg-indigo-600" : "bg-gray-800 border border-gray-700"
+                                    className={`flex-1 h-11 rounded-xl items-center justify-center ${gender === "Female" ? "bg-indigo-600" : "bg-gray-800 border border-gray-700"
                                         }`}
                                 >
-                                    <Text className={`font-bold text-lg ${gender === "Female" ? "text-white" : "text-gray-400"
-                                        }`}>Female</Text>
+                                    <Text className={`font-semibold text-sm ${gender === "Female" ? "text-white" : "text-gray-400"
+                                        }`}>{t('dog.female')}</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
 
                         <Button
-                            title="Create Profile"
+                            title={t('dog.create_button')}
                             onPress={handleCreate}
                             loading={loading}
                             className="mt-4"

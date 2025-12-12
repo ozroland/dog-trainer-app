@@ -5,8 +5,11 @@ import { supabase } from "../../../lib/supabase";
 import { Dog, Achievement, DogAchievement } from "../../../types";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
+import { ScreenHeader } from "../../../components/ScreenHeader";
 
 export default function AchievementsScreen() {
+    const { t, i18n } = useTranslation();
     const { id } = useLocalSearchParams();
     const router = useRouter();
     const insets = useSafeAreaInsets();
@@ -63,23 +66,16 @@ export default function AchievementsScreen() {
         <View className="flex-1 bg-gray-900">
             <Stack.Screen options={{ headerShown: false }} />
 
-            {/* Header */}
-            <View className="bg-gray-800 border-b border-gray-700" style={{ paddingTop: insets.top }}>
-                <View className="flex-row items-center px-4 h-14">
-                    <TouchableOpacity onPress={() => router.back()} className="mr-4 w-10 h-10 items-center justify-center rounded-full bg-gray-700">
-                        <Ionicons name="arrow-back" size={24} color="white" />
-                    </TouchableOpacity>
-                    <Text className="text-white text-lg font-semibold flex-1 text-center mr-14">Achievements</Text>
-                </View>
-            </View>
+            {/* Standardized Header */}
+            <ScreenHeader title={t('achievements.title')} />
 
             <ScrollView className="flex-1 p-6">
                 {/* Header Card */}
                 <View className="bg-indigo-600 p-6 rounded-3xl mb-8 items-center">
                     <Text className="text-5xl mb-2">🏆</Text>
-                    <Text className="text-white text-2xl font-bold mb-1">Hall of Fame</Text>
+                    <Text className="text-white text-2xl font-bold mb-1">{t('achievements.hall_of_fame')}</Text>
                     <Text className="text-indigo-200 text-center">
-                        {unlocked.size} / {achievements.length} Badges Unlocked
+                        {unlocked.size} / {achievements.length} {t('achievements.badges_unlocked')}
                     </Text>
                 </View>
 
@@ -105,10 +101,10 @@ export default function AchievementsScreen() {
                                     />
                                 </View>
                                 <Text className={`font-bold mb-1 ${isUnlocked ? "text-white" : "text-gray-500"}`}>
-                                    {achievement.title}
+                                    {i18n.language === 'hu' && achievement.title_hu ? achievement.title_hu : achievement.title}
                                 </Text>
                                 <Text className="text-xs text-gray-400 leading-4">
-                                    {achievement.description}
+                                    {i18n.language === 'hu' && achievement.description_hu ? achievement.description_hu : achievement.description}
                                 </Text>
                                 {isUnlocked && (
                                     <View className="absolute top-3 right-3">

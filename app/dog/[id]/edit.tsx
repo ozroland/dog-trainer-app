@@ -7,7 +7,10 @@ import { Input } from "../../../components/ui/Input";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useTranslation } from "react-i18next";
+
 export default function EditDogScreen() {
+    const { t } = useTranslation();
     const { id } = useLocalSearchParams();
     const router = useRouter();
     const insets = useSafeAreaInsets();
@@ -43,7 +46,7 @@ export default function EditDogScreen() {
             }
         } catch (error) {
             console.error(error);
-            Alert.alert("Error", "Failed to load dog details");
+            Alert.alert(t('common.error'), t('dog.error_load'));
         } finally {
             setLoading(false);
         }
@@ -51,7 +54,7 @@ export default function EditDogScreen() {
 
     async function handleUpdate() {
         if (!name || !breed || !age) {
-            Alert.alert("Error", "Please fill in all required fields (Name, Breed, Age)");
+            Alert.alert(t('common.error'), t('dog.error_required'));
             return;
         }
 
@@ -70,11 +73,13 @@ export default function EditDogScreen() {
 
             if (error) throw error;
 
-            Alert.alert("Success", "Profile updated successfully!", [
+            if (error) throw error;
+
+            Alert.alert(t('common.success'), t('dog.update_success'), [
                 { text: "OK", onPress: () => router.back() }
             ]);
         } catch (error: any) {
-            Alert.alert("Error", error.message);
+            Alert.alert(t('common.error'), error.message);
         } finally {
             setSaving(false);
         }
@@ -82,12 +87,12 @@ export default function EditDogScreen() {
 
     async function handleDelete() {
         Alert.alert(
-            "Delete Profile",
-            `Are you sure you want to delete ${name}'s profile? This cannot be undone.`,
+            t('dog.delete_profile'),
+            t('dog.delete_profile_confirm', { name }),
             [
-                { text: "Cancel", style: "cancel" },
+                { text: t('common.cancel'), style: "cancel" },
                 {
-                    text: "Delete",
+                    text: t('common.delete'),
                     style: "destructive",
                     onPress: async () => {
                         try {
@@ -100,7 +105,7 @@ export default function EditDogScreen() {
 
                             router.replace("/");
                         } catch (error: any) {
-                            Alert.alert("Error", error.message);
+                            Alert.alert(t('common.error'), error.message);
                         }
                     }
                 }
@@ -111,7 +116,7 @@ export default function EditDogScreen() {
     if (loading) {
         return (
             <View className="flex-1 bg-gray-900 items-center justify-center">
-                <Text className="text-white">Loading...</Text>
+                <Text className="text-white">{t('common.loading')}</Text>
             </View>
         );
     }
@@ -125,16 +130,17 @@ export default function EditDogScreen() {
                 className="bg-gray-800 border-b border-gray-700"
                 style={{ paddingTop: insets.top }}
             >
-                <View className="flex-row items-center px-4 h-14">
+                <View className="flex-row items-center justify-between px-4 h-14">
                     <TouchableOpacity
                         onPress={() => router.back()}
-                        className="mr-4 w-10 h-10 items-center justify-center rounded-full bg-gray-700"
+                        className="w-10 h-10 items-center justify-center rounded-full bg-gray-700"
                     >
                         <Ionicons name="arrow-back" size={24} color="white" />
                     </TouchableOpacity>
-                    <Text className="text-white text-lg font-semibold flex-1 text-center mr-14">
-                        Edit Profile
+                    <Text className="text-white text-lg font-semibold text-center">
+                        {t('dog.edit_title')}
                     </Text>
+                    <View className="w-10" />
                 </View>
             </View>
 
@@ -146,13 +152,13 @@ export default function EditDogScreen() {
                 <ScrollView className="flex-1 p-6">
                     <View className="mt-2">
                         <Input
-                            label="Name *"
+                            label={t('dog.name') + " *"}
                             value={name}
                             onChangeText={setName}
                         />
 
                         <Input
-                            label="Breed *"
+                            label={t('dog.breed') + " *"}
                             value={breed}
                             onChangeText={setBreed}
                         />
@@ -160,7 +166,7 @@ export default function EditDogScreen() {
                         <View className="flex-row space-x-4">
                             <View className="flex-1">
                                 <Input
-                                    label="Age (months) *"
+                                    label={t('dog.age_label')}
                                     value={age}
                                     onChangeText={setAge}
                                     keyboardType="numeric"
@@ -168,7 +174,7 @@ export default function EditDogScreen() {
                             </View>
                             <View className="flex-1">
                                 <Input
-                                    label="Weight (kg)"
+                                    label={t('dog.weight_label')}
                                     value={weight}
                                     onChangeText={setWeight}
                                     keyboardType="numeric"
@@ -177,14 +183,14 @@ export default function EditDogScreen() {
                         </View>
 
                         <Input
-                            label="Favorite Treat"
+                            label={t('dog.favorite_treat')}
                             value={favoriteTreat}
                             onChangeText={setFavoriteTreat}
-                            placeholder="Chicken, Cheese..."
+                            placeholder={t('dog.treat_placeholder')}
                         />
 
                         <Button
-                            title="Save Changes"
+                            title={t('dog.save_changes')}
                             onPress={handleUpdate}
                             loading={saving}
                             className="mt-4 mb-4"
@@ -195,7 +201,7 @@ export default function EditDogScreen() {
                             className="bg-red-500/10 border border-red-500/30 p-4 rounded-2xl items-center flex-row justify-center mb-10"
                         >
                             <Ionicons name="trash-outline" size={20} color="#ef4444" />
-                            <Text className="text-red-500 font-bold ml-2">Delete Profile</Text>
+                            <Text className="text-red-500 font-bold ml-2">{t('dog.delete_profile')}</Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>

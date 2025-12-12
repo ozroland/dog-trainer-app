@@ -1,8 +1,13 @@
-import { View, Text, TouchableOpacity, FlatList, Image, Modal, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, Image, Modal } from 'react-native';
+import { useState } from 'react';
+import { usePremium } from '../lib/premium';
+import { PaywallModal } from './PaywallModal';
 import { Dog } from '../types';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
+import { t } from 'i18next';
+import haptics from '../lib/haptics';
 
 interface DogSwitcherProps {
     visible: boolean;
@@ -15,7 +20,22 @@ interface DogSwitcherProps {
 
 export function DogSwitcher({ visible, dogs, activeDogId, onSelect, onClose, onAddDog }: DogSwitcherProps) {
     const insets = useSafeAreaInsets();
-    const screenHeight = Dimensions.get('window').height;
+    const { isPremium } = usePremium();
+    const [showPaywall, setShowPaywall] = useState(false);
+
+    const handleAddDog = () => {
+        haptics.medium();
+        if (dogs.length >= 1 && !isPremium) {
+            setShowPaywall(true);
+        } else {
+            onAddDog();
+        }
+    };
+
+    const handleSelect = (dog: Dog) => {
+        haptics.selection();
+        onSelect(dog);
+    };
 
     return (
         <Modal
@@ -41,7 +61,7 @@ export function DogSwitcher({ visible, dogs, activeDogId, onSelect, onClose, onA
                 {/* Modal Content */}
                 <View className="bg-gray-800 w-full rounded-3xl border border-gray-700 overflow-hidden shadow-2xl shadow-black elevation-10">
                     <View className="p-6 pb-4 border-b border-gray-700 flex-row justify-between items-center">
-                        <Text className="text-2xl font-bold text-white">Switch Dog</Text>
+                        <Text className="text-2xl font-bold text-white">{t('dog.switch')}</Text>
                         <TouchableOpacity onPress={onClose} className="bg-gray-700 p-2 rounded-full">
                             <Ionicons name="close" size={20} color="#9ca3af" />
                         </TouchableOpacity>
@@ -53,7 +73,7 @@ export function DogSwitcher({ visible, dogs, activeDogId, onSelect, onClose, onA
                         contentContainerStyle={{ padding: 24 }}
                         renderItem={({ item }) => (
                             <TouchableOpacity
-                                onPress={() => onSelect(item)}
+                                onPress={() => handleSelect(item)}
                                 className={`p-4 mb-3 flex-row items-center rounded-2xl border ${item.id === activeDogId
                                     ? 'bg-indigo-500/20 border-indigo-500'
                                     : 'bg-gray-700/50 border-gray-600'
@@ -79,16 +99,18 @@ export function DogSwitcher({ visible, dogs, activeDogId, onSelect, onClose, onA
                         )}
                         ListFooterComponent={() => (
                             <TouchableOpacity
-                                onPress={onAddDog}
+                                onPress={handleAddDog}
                                 className="mt-2 p-4 bg-indigo-600 rounded-2xl flex-row items-center justify-center space-x-2 active:bg-indigo-700 shadow-lg shadow-indigo-900/20"
                             >
                                 <Ionicons name="add" size={24} color="white" />
-                                <Text className="text-white font-bold text-lg">Add New Dog</Text>
+                                <Text className="text-white font-bold text-lg">{t('dog.add_new')}</Text>
                             </TouchableOpacity>
                         )}
                     />
                 </View>
             </View>
+
+            <PaywallModal visible={showPaywall} onClose={() => setShowPaywall(false)} />
         </Modal>
     );
 }
