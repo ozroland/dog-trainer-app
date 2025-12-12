@@ -1,38 +1,55 @@
 import { View, Text, ScrollView, TouchableOpacity, Alert, Modal, TextInput, Platform } from "react-native";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { format } from "date-fns";
+import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../../../lib/supabase";
 import { Dog, WeightLog, HealthRecord } from "../../../types";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LineChart } from "react-native-chart-kit";
 import { Dimensions } from "react-native";
+import { Skeleton, CardSkeleton } from "../../../components/ui/Skeleton";
+import { NoHealthRecordsEmptyState } from "../../../components/EmptyState";
 
 const screenWidth = Dimensions.get("window").width;
 
 export default function HealthScreen() {
-    const { id } = useLocalSearchParams();
+    const { id, action } = useLocalSearchParams();
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const [dog, setDog] = useState<Dog | null>(null);
     const [weightLogs, setWeightLogs] = useState<WeightLog[]>([]);
     const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([]);
     const [loading, setLoading] = useState(true);
+    const { t, i18n } = useTranslation();
+    const dateLocale = i18n.language === 'hu' ? 'hu-HU' : 'en-US';
 
     // Modal States
     const [showWeightModal, setShowWeightModal] = useState(false);
     const [newWeight, setNewWeight] = useState("");
 
-    const [showHealthModal, setShowHealthModal] = useState(false);
-    const [recordType, setRecordType] = useState<'vaccination' | 'vet_visit' | 'medication'>('vet_visit');
-    const [recordTitle, setRecordTitle] = useState("");
-    const [recordDate, setRecordDate] = useState(new Date().toISOString().split('T')[0]);
-    const [recordNotes, setRecordNotes] = useState("");
+    // Health Record Modal State - REMOVED (Moved to add-health.tsx)
+
+    // Detail Modal State
+    const [selectedRecord, setSelectedRecord] = useState<HealthRecord | null>(null);
+    const [showDetailModal, setShowDetailModal] = useState(false);
 
     // Fetch Data
+    useFocusEffect(
+        useCallback(() => {
+            fetchHealthData();
+        }, [id])
+    );
+
     useEffect(() => {
-        fetchHealthData();
-    }, [id]);
+        if (action === 'log_weight') {
+            setShowWeightModal(true);
+        } else if (action === 'add_record') {
+            router.push(`/dog/${id}/add-health`);
+        }
+    }, [action]);
 
     async function fetchHealthData() {
         try {
@@ -64,7 +81,7 @@ export default function HealthScreen() {
             setHealthRecords(healthData || []);
 
         } catch (error: any) {
-            Alert.alert("Error", error.message);
+            Alert.alert(t('common.error'), error.message);
         } finally {
             setLoading(false);
         }
@@ -94,32 +111,36 @@ export default function HealthScreen() {
         }
     }
 
-    async function handleAddHealthRecord() {
-        if (!recordTitle) {
-            Alert.alert("Error", "Please enter a title");
-            return;
-        }
-        try {
-            const { error } = await supabase.from("health_records").insert({
-                dog_id: id,
-                type: recordType,
-                title: recordTitle,
-                date: recordDate,
-                notes: recordNotes
-            });
+    // handleAddHealthRecord REMOVED (Moved to add-health.tsx)
 
-            if (error) throw error;
+    async function handleDeleteHealthRecord(recordId: string) {
+        Alert.alert(
+            t('health.delete_confirm_title'),
+            t('health.delete_confirm_message'),
+            [
+                { text: t('common.cancel'), style: "cancel" },
+                {
+                    text: t('common.delete'),
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            const { error } = await supabase
+                                .from("health_records")
+                                .delete()
+                                .eq("id", recordId);
 
-            fetchHealthData();
-            setShowHealthModal(false);
-            setRecordTitle("");
-            setRecordNotes("");
-            setRecordDate(new Date().toISOString().split('T')[0]);
-            setRecordType('vet_visit');
+                            if (error) throw error;
 
-        } catch (error: any) {
-            Alert.alert("Error", error.message);
-        }
+                            fetchHealthData();
+                            setShowDetailModal(false);
+                            setSelectedRecord(null);
+                        } catch (error: any) {
+                            Alert.alert(t('common.error'), error.message);
+                        }
+                    }
+                }
+            ]
+        );
     }
 
     const chartData = {
@@ -134,11 +155,32 @@ export default function HealthScreen() {
                 strokeWidth: 2
             }
         ],
-        legend: ["Weight (kg)"]
+        legend: [t('health.weight_chart_label')]
     };
 
     if (loading) {
-        return <View className="flex-1 bg-gray-900 items-center justify-center"><Text className="text-white">Loading...</Text></View>;
+        return (
+            <View className="flex-1 bg-gray-900">
+                <View className="px-6" style={{ paddingTop: insets.top + 60 }}>
+                    {/* Weight chart skeleton */}
+                    <View className="bg-gray-800 p-4 rounded-2xl border border-gray-700 mb-6">
+                        <View className="flex-row justify-between items-center mb-4">
+                            <Skeleton width="50%" height={20} />
+                            <Skeleton width={100} height={36} borderRadius={18} />
+                        </View>
+                        <Skeleton width="100%" height={200} borderRadius={16} />
+                    </View>
+
+                    {/* Records section skeleton */}
+                    <View className="flex-row justify-between items-center mb-4">
+                        <Skeleton width="40%" height={20} />
+                        <Skeleton width={120} height={36} borderRadius={18} />
+                    </View>
+                    <CardSkeleton />
+                    <CardSkeleton />
+                </View>
+            </View>
+        );
     }
 
     return (
@@ -151,35 +193,20 @@ export default function HealthScreen() {
                     <TouchableOpacity onPress={() => router.back()} className="mr-4 w-10 h-10 items-center justify-center rounded-full bg-gray-700">
                         <Ionicons name="arrow-back" size={24} color="white" />
                     </TouchableOpacity>
-                    <Text className="text-white text-lg font-semibold flex-1 text-center mr-14">Health & Wellness</Text>
+                    <Text className="text-white text-lg font-semibold flex-1 text-center mr-14">{t('health.title')}</Text>
                 </View>
             </View>
 
             <ScrollView className="flex-1 p-6">
 
-                {/* Dog ID Card Button */}
-                <TouchableOpacity
-                    className="bg-indigo-600 rounded-2xl p-4 flex-row items-center justify-between mb-8 shadow-lg shadow-indigo-900/20"
-                    onPress={() => Alert.alert("Coming Soon", "Sitter Mode / Dog ID Card will be implemented next!")}
-                >
-                    <View className="flex-row items-center space-x-4">
-                        <View className="w-12 h-12 bg-white/20 rounded-full items-center justify-center">
-                            <Ionicons name="id-card-outline" size={24} color="white" />
-                        </View>
-                        <View>
-                            <Text className="text-white font-bold text-lg">Sitter Mode</Text>
-                            <Text className="text-indigo-200 text-sm">Generate Boarding Pass</Text>
-                        </View>
-                    </View>
-                    <Ionicons name="chevron-forward" size={24} color="white" />
-                </TouchableOpacity>
+
 
                 {/* Weight Tracker */}
                 <View className="mb-8">
                     <View className="flex-row justify-between items-end mb-4">
-                        <Text className="text-white text-xl font-bold">Weight Tracker</Text>
+                        <Text className="text-white text-xl font-bold">{t('health.weight_tracker')}</Text>
                         <TouchableOpacity onPress={() => setShowWeightModal(true)}>
-                            <Text className="text-indigo-400 font-semibold">Log Weight</Text>
+                            <Text className="text-indigo-400 font-semibold">{t('health.log_weight')}</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -205,8 +232,8 @@ export default function HealthScreen() {
                         ) : (
                             <View className="py-10 items-center">
                                 <Ionicons name="stats-chart" size={48} color="#374151" />
-                                <Text className="text-gray-400 mt-4 text-center font-semibold">No weight history yet</Text>
-                                <Text className="text-gray-500 text-sm text-center mt-1">Log your dog's weight to see the chart</Text>
+                                <Text className="text-gray-400 mt-4 text-center font-semibold">{t('health.no_weight_history')}</Text>
+                                <Text className="text-gray-500 text-sm text-center mt-1">{t('health.log_weight_hint')}</Text>
                             </View>
                         )}
                     </View>
@@ -215,9 +242,11 @@ export default function HealthScreen() {
                 {/* Health Records */}
                 <View className="mb-20">
                     <View className="flex-row justify-between items-center mb-4">
-                        <Text className="text-white text-xl font-bold">Health Records</Text>
+                        <Text className="text-white text-xl font-bold">{t('health.records')}</Text>
                         <TouchableOpacity
-                            onPress={() => setShowHealthModal(true)}
+                            onPress={() => {
+                                router.push(`/dog/${id}/add-health`);
+                            }}
                             className="w-8 h-8 bg-gray-800 rounded-full items-center justify-center"
                         >
                             <Ionicons name="add" size={20} color="white" />
@@ -225,13 +254,17 @@ export default function HealthScreen() {
                     </View>
 
                     {healthRecords.length === 0 ? (
-                        <View className="bg-gray-800 rounded-2xl p-6 items-center">
-                            <Ionicons name="medical-outline" size={48} color="#4b5563" />
-                            <Text className="text-gray-400 mt-2">No records yet</Text>
-                        </View>
+                        <NoHealthRecordsEmptyState onAddRecord={() => router.push(`/dog/${id}/add-health`)} />
                     ) : (
                         healthRecords.map(record => (
-                            <View key={record.id} className="bg-gray-800 rounded-2xl p-4 mb-3 flex-row items-center">
+                            <TouchableOpacity
+                                key={record.id}
+                                onPress={() => {
+                                    setSelectedRecord(record);
+                                    setShowDetailModal(true);
+                                }}
+                                className="bg-gray-800 rounded-2xl p-4 mb-3 flex-row items-center"
+                            >
                                 <View className={`w-10 h-10 rounded-full items-center justify-center mr-4 ${record.type === 'vaccination' ? 'bg-green-500/20' :
                                     record.type === 'vet_visit' ? 'bg-blue-500/20' : 'bg-orange-500/20'
                                     }`}>
@@ -245,12 +278,14 @@ export default function HealthScreen() {
                                 </View>
                                 <View className="flex-1">
                                     <Text className="text-white font-semibold text-base">{record.title}</Text>
-                                    <Text className="text-gray-400 text-sm">{new Date(record.date).toLocaleDateString()}</Text>
+                                    <Text className="text-gray-400 text-sm">{new Date(record.date).toLocaleDateString(dateLocale)}</Text>
                                 </View>
-                            </View>
+                                <Ionicons name="chevron-forward" size={20} color="#4b5563" />
+                            </TouchableOpacity>
                         ))
                     )}
                 </View>
+
             </ScrollView>
 
             {/* Add Weight Modal */}
@@ -258,13 +293,13 @@ export default function HealthScreen() {
                 <TouchableOpacity
                     activeOpacity={1}
                     onPress={() => setShowWeightModal(false)}
-                    className="flex-1 bg-black/60 justify-center items-center p-6"
+                    className="flex-1 bg-black/60 justify-start items-center p-6 pt-48"
                 >
                     <View className="bg-gray-800 w-full rounded-3xl p-6">
-                        <Text className="text-white text-xl font-bold mb-4">Log Weight</Text>
+                        <Text className="text-white text-xl font-bold mb-4">{t('health.log_weight')}</Text>
                         <TextInput
                             className="bg-gray-700 text-white p-4 rounded-xl text-lg mb-6"
-                            placeholder="Weight in kg"
+                            placeholder={t('health.weight_in_kg')}
                             placeholderTextColor="#9ca3af"
                             keyboardType="numeric"
                             value={newWeight}
@@ -276,92 +311,70 @@ export default function HealthScreen() {
                                 onPress={() => setShowWeightModal(false)}
                                 className="flex-1 bg-gray-700 p-4 rounded-xl items-center"
                             >
-                                <Text className="text-white font-semibold">Cancel</Text>
+                                <Text className="text-white font-semibold">{t('common.cancel')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={handleAddWeight}
                                 className="flex-1 bg-indigo-600 p-4 rounded-xl items-center"
                             >
-                                <Text className="text-white font-bold">Save</Text>
+                                <Text className="text-white font-bold">{t('common.save')}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
                 </TouchableOpacity>
             </Modal>
 
-            {/* Add Health Record Modal */}
-            <Modal visible={showHealthModal} transparent animationType="fade">
+            {/* Add Health Record Modal REMOVED */}
+
+            {/* Record Detail Modal */}
+            <Modal visible={showDetailModal} transparent animationType="fade">
                 <TouchableOpacity
                     activeOpacity={1}
-                    onPress={() => setShowHealthModal(false)}
+                    onPress={() => setShowDetailModal(false)}
                     className="flex-1 bg-black/60 justify-center items-center p-6"
                 >
                     <View className="bg-gray-800 w-full rounded-3xl p-6">
-                        <Text className="text-white text-xl font-bold mb-4">Add Health Record</Text>
+                        {selectedRecord && (
+                            <>
+                                <View className="flex-row justify-between items-start mb-6">
+                                    <View className="flex-1 mr-4">
+                                        <Text className="text-white text-2xl font-bold mb-1">{selectedRecord.title}</Text>
+                                        <Text className="text-indigo-400 font-semibold capitalize">{t(`health.${selectedRecord.type}`)}</Text>
+                                    </View>
+                                    <View className="bg-gray-700 px-3 py-1 rounded-lg">
+                                        <Text className="text-gray-300 text-sm">{new Date(selectedRecord.date).toLocaleDateString(dateLocale)}</Text>
+                                    </View>
+                                </View>
 
-                        {/* Type Selection */}
-                        <View className="flex-row mb-4 space-x-2">
-                            {(['vaccination', 'vet_visit', 'medication'] as const).map((type) => (
-                                <TouchableOpacity
-                                    key={type}
-                                    onPress={() => setRecordType(type)}
-                                    className={`flex-1 p-2 rounded-lg items-center border ${recordType === type
-                                            ? 'bg-indigo-600 border-indigo-600'
-                                            : 'bg-gray-700 border-gray-600'
-                                        }`}
-                                >
-                                    <Text className={`text-xs font-bold capitalize ${recordType === type ? 'text-white' : 'text-gray-400'
-                                        }`}>
-                                        {type.replace('_', ' ')}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
+                                {selectedRecord.notes ? (
+                                    <View className="bg-gray-700/50 p-4 rounded-xl mb-6">
+                                        <Text className="text-gray-400 text-sm mb-2 font-medium">{t('health.notes')}</Text>
+                                        <Text className="text-white text-base leading-6">{selectedRecord.notes}</Text>
+                                    </View>
+                                ) : (
+                                    <Text className="text-gray-500 italic mb-8">{t('health.no_notes')}</Text>
+                                )}
 
-                        <TextInput
-                            className="bg-gray-700 text-white p-4 rounded-xl text-base mb-3"
-                            placeholder="Title (e.g. Rabies Vaccine)"
-                            placeholderTextColor="#9ca3af"
-                            value={recordTitle}
-                            onChangeText={setRecordTitle}
-                        />
-
-                        <TextInput
-                            className="bg-gray-700 text-white p-4 rounded-xl text-base mb-3"
-                            placeholder="Date (YYYY-MM-DD)"
-                            placeholderTextColor="#9ca3af"
-                            value={recordDate}
-                            onChangeText={setRecordDate}
-                        />
-
-                        <TextInput
-                            className="bg-gray-700 text-white p-4 rounded-xl text-base mb-6 h-24"
-                            placeholder="Notes (optional)"
-                            placeholderTextColor="#9ca3af"
-                            multiline
-                            textAlignVertical="top"
-                            value={recordNotes}
-                            onChangeText={setRecordNotes}
-                        />
-
-                        <View className="flex-row space-x-4">
-                            <TouchableOpacity
-                                onPress={() => setShowHealthModal(false)}
-                                className="flex-1 bg-gray-700 p-4 rounded-xl items-center"
-                            >
-                                <Text className="text-white font-semibold">Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={handleAddHealthRecord}
-                                className="flex-1 bg-indigo-600 p-4 rounded-xl items-center"
-                            >
-                                <Text className="text-white font-bold">Save</Text>
-                            </TouchableOpacity>
-                        </View>
+                                <View className="flex-row space-x-4">
+                                    <TouchableOpacity
+                                        onPress={() => setShowDetailModal(false)}
+                                        className="flex-1 bg-gray-700 p-4 rounded-xl items-center"
+                                    >
+                                        <Text className="text-white font-semibold">{t('common.close')}</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        onPress={() => handleDeleteHealthRecord(selectedRecord.id)}
+                                        className="flex-1 bg-red-500/20 border border-red-500/50 p-4 rounded-xl items-center"
+                                    >
+                                        <Text className="text-red-400 font-bold">{t('common.delete')}</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </>
+                        )}
                     </View>
                 </TouchableOpacity>
             </Modal>
 
-        </View>
+        </View >
     );
 }

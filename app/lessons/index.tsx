@@ -6,7 +6,10 @@ import { Lesson } from "../../types";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from '@expo/vector-icons/Ionicons';
 
+import { useTranslation } from "react-i18next";
+
 export default function LessonsScreen() {
+    const { t, i18n } = useTranslation();
     const { dogId } = useLocalSearchParams();
     const [lessons, setLessons] = useState<Lesson[]>([]);
     const [loading, setLoading] = useState(true);
@@ -86,13 +89,13 @@ export default function LessonsScreen() {
                         <Ionicons name="arrow-back" size={24} color="white" />
                     </TouchableOpacity>
                     <Text className="text-white text-lg font-semibold flex-1 text-center mr-14">
-                        Training Lessons
+                        {t('lessons.title')}
                     </Text>
                 </View>
             </View>
 
             <View className="px-6 py-4">
-                <Text className="text-gray-400 mb-6">Master essential commands</Text>
+                <Text className="text-gray-400 mb-6">{t('lessons.subtitle')}</Text>
 
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6">
                     {(['All', 'Beginner', 'Intermediate', 'Advanced'] as const).map((level) => (
@@ -102,7 +105,7 @@ export default function LessonsScreen() {
                             className={`mr-3 px-4 py-2 rounded-full ${filter === level ? 'bg-indigo-600' : 'bg-gray-800'}`}
                         >
                             <Text className={`font-semibold ${filter === level ? 'text-white' : 'text-gray-400'}`}>
-                                {level}
+                                {t(`lessons.${level.toLowerCase()}`)}
                             </Text>
                         </TouchableOpacity>
                     ))}
@@ -111,7 +114,7 @@ export default function LessonsScreen() {
 
             <ScrollView className="flex-1 px-6">
                 {loading ? (
-                    <Text className="text-white">Loading...</Text>
+                    <Text className="text-white">{t('common.loading')}</Text>
                 ) : (
                     filteredLessons.map((lesson) => {
                         const isCompleted = completedLessonIds.has(lesson.id);
@@ -127,12 +130,12 @@ export default function LessonsScreen() {
                         if (lesson.difficulty === 'Intermediate') {
                             if (beginnerCount < 3) {
                                 isLocked = true;
-                                lockReason = `Complete ${3 - beginnerCount} more Beginner lessons to unlock`;
+                                lockReason = t('lessons.unlock_beginner', { count: 3 - beginnerCount });
                             }
                         } else if (lesson.difficulty === 'Advanced') {
                             if (intermediateCount < 3) {
                                 isLocked = true;
-                                lockReason = `Complete ${3 - intermediateCount} more Intermediate lessons to unlock`;
+                                lockReason = t('lessons.unlock_intermediate', { count: 3 - intermediateCount });
                             }
                         }
 
@@ -152,7 +155,7 @@ export default function LessonsScreen() {
                                     <View className="flex-1 mr-2">
                                         <Text className={`text-lg font-bold ${isLocked ? 'text-gray-500' : isCompleted ? 'text-green-400' : 'text-white'
                                             }`}>
-                                            {lesson.title}
+                                            {i18n.language === 'hu' ? (lesson.title_hu || lesson.title) : lesson.title}
                                         </Text>
                                     </View>
                                     <View className="flex-row items-center gap-2">
@@ -168,7 +171,7 @@ export default function LessonsScreen() {
                                         <View className={`px-3 py-1 rounded-full ${isLocked ? 'bg-gray-700' : difficultyColors[lesson.difficulty]
                                             }`}>
                                             <Text className={`text-xs font-bold ${isLocked ? 'text-gray-400' : 'text-white'}`}>
-                                                {lesson.difficulty}
+                                                {t(`lessons.${lesson.difficulty.toLowerCase()}`)}
                                             </Text>
                                         </View>
                                     </View>
@@ -181,8 +184,8 @@ export default function LessonsScreen() {
                                     </View>
                                 ) : (
                                     <>
-                                        <Text className="text-gray-400 mb-3">{lesson.description}</Text>
-                                        <Text className="text-gray-500 text-sm">⏱️ {lesson.duration_minutes} min</Text>
+                                        <Text className="text-gray-400 mb-3">{i18n.language === 'hu' ? (lesson.description_hu || lesson.description) : lesson.description}</Text>
+                                        <Text className="text-gray-500 text-sm">⏱️ {t('lessons.minutes', { count: lesson.duration_minutes })}</Text>
                                     </>
                                 )}
                             </TouchableOpacity>

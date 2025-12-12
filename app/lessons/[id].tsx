@@ -2,17 +2,26 @@ import { View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator } fr
 import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import { Lesson } from "../../types";
+import { Lesson, Achievement } from "../../types";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Markdown from 'react-native-markdown-display';
+import { useTranslation } from "react-i18next";
+import { Confetti } from "../../components/Confetti";
+import { AchievementModal } from "../../components/AchievementModal";
+import { checkAndUnlockAchievements } from "../../lib/achievements";
+import * as Haptics from 'expo-haptics';
 
 export default function LessonDetailScreen() {
+    const { t, i18n } = useTranslation();
     const { id, dogId } = useLocalSearchParams();
     const [lesson, setLesson] = useState<Lesson | null>(null);
     const [loading, setLoading] = useState(true);
     const [completing, setCompleting] = useState(false);
     const [isCompleted, setIsCompleted] = useState(false);
+    const [showConfetti, setShowConfetti] = useState(false);
+    const [unlockedAchievement, setUnlockedAchievement] = useState<Achievement | null>(null);
+    const [showAchievementModal, setShowAchievementModal] = useState(false);
     const router = useRouter();
     const insets = useSafeAreaInsets();
 
@@ -46,7 +55,7 @@ export default function LessonDetailScreen() {
             }
         } catch (error) {
             console.error(error);
-            Alert.alert('Error', 'Failed to load lesson');
+            Alert.alert(t('common.error'), t('lessons.load_error'));
         } finally {
             setLoading(false);
         }
@@ -77,16 +86,31 @@ export default function LessonDetailScreen() {
 
             setIsCompleted(true);
 
-            // 2. Check for achievements (simplified, usually handled by DB triggers or separate logic)
-            // For now, just show success
-            Alert.alert("Great Job!", "Lesson completed successfully!");
+            // 2. Confetti and haptic celebration!
+            setShowConfetti(true);
+            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-            // 3. Go back
-            router.back();
+            // 3. Check for new achievements
+            if (dogId) {
+                const { newlyUnlocked } = await checkAndUnlockAchievements(dogId as string);
+                if (newlyUnlocked.length > 0) {
+                    // Show the first unlocked achievement
+                    setUnlockedAchievement(newlyUnlocked[0]);
+                    setShowAchievementModal(true);
+                    return; // Don't go back yet, let the modal handle navigation
+                }
+            }
+
+            // 4. Show success message and go back
+            Alert.alert(t('lessons.complete_success_title'), t('lessons.complete_success_message'));
+            setTimeout(() => {
+                setShowConfetti(false);
+                router.back();
+            }, 2000);
 
         } catch (error) {
             console.error(error);
-            Alert.alert('Error', 'Failed to complete lesson');
+            Alert.alert(t('common.error'), t('lessons.complete_error'));
         } finally {
             setCompleting(false);
         }
@@ -102,6 +126,7 @@ export default function LessonDetailScreen() {
 
     return (
         <View className="flex-1 bg-gray-900">
+            <Confetti visible={showConfetti} />
             <Stack.Screen options={{ headerShown: false }} />
 
             {/* Header */}
@@ -117,7 +142,7 @@ export default function LessonDetailScreen() {
                         <Ionicons name="arrow-back" size={24} color="white" />
                     </TouchableOpacity>
                     <Text className="text-white text-lg font-semibold flex-1 text-center mr-14" numberOfLines={1}>
-                        {lesson.title}
+                        {i18n.language === 'hu' && lesson.title_hu ? lesson.title_hu : lesson.title}
                     </Text>
                 </View>
             </View>
@@ -125,20 +150,20 @@ export default function LessonDetailScreen() {
             <ScrollView className="flex-1 px-6 py-6">
                 <View className="flex-row justify-between items-start mb-6">
                     <View className={`px-3 py-1 rounded-full ${lesson.difficulty === 'Beginner' ? 'bg-green-500/20' :
-                            lesson.difficulty === 'Intermediate' ? 'bg-yellow-500/20' : 'bg-red-500/20'
+                        lesson.difficulty === 'Intermediate' ? 'bg-yellow-500/20' : 'bg-red-500/20'
                         }`}>
                         <Text className={`text-xs font-bold ${lesson.difficulty === 'Beginner' ? 'text-green-400' :
-                                lesson.difficulty === 'Intermediate' ? 'text-yellow-400' : 'text-red-400'
-                            }`}>{lesson.difficulty}</Text>
+                            lesson.difficulty === 'Intermediate' ? 'text-yellow-400' : 'text-red-400'
+                            }`}>{t(`lessons.${lesson.difficulty.toLowerCase()}`)}</Text>
                     </View>
                     <View className="flex-row items-center">
                         <Ionicons name="time-outline" size={16} color="#9ca3af" />
-                        <Text className="text-gray-400 ml-1">{lesson.duration_minutes} min</Text>
+                        <Text className="text-gray-400 ml-1">{t('lessons.minutes', { count: lesson.duration_minutes })}</Text>
                     </View>
                 </View>
 
                 <Text className="text-gray-300 text-lg mb-8 leading-relaxed">
-                    {lesson.description}
+                    {i18n.language === 'hu' && lesson.description_hu ? lesson.description_hu : lesson.description}
                 </Text>
 
                 <View className="bg-gray-800 p-4 rounded-2xl mb-8">
@@ -151,7 +176,7 @@ export default function LessonDetailScreen() {
                             strong: { color: 'white', fontWeight: 'bold' },
                         }}
                     >
-                        {lesson.content_markdown}
+                        {i18n.language === 'hu' && lesson.content_markdown_hu ? lesson.content_markdown_hu : lesson.content_markdown}
                     </Markdown>
                 </View>
 
@@ -166,7 +191,7 @@ export default function LessonDetailScreen() {
                         {completing ? (
                             <ActivityIndicator color="white" />
                         ) : (
-                            <Text className="text-white font-bold text-lg">Complete Lesson</Text>
+                            <Text className="text-white font-bold text-lg">{t('lessons.complete_button')}</Text>
                         )}
                     </TouchableOpacity>
                 )}
@@ -175,11 +200,24 @@ export default function LessonDetailScreen() {
                     <View className="w-full py-4 rounded-2xl items-center mb-10 bg-green-500/20 border border-green-500/30">
                         <View className="flex-row items-center">
                             <Ionicons name="checkmark-circle" size={24} color="#4ade80" />
-                            <Text className="text-green-400 font-bold text-lg ml-2">Lesson Completed</Text>
+                            <Text className="text-green-400 font-bold text-lg ml-2">{t('lessons.completed')}</Text>
                         </View>
                     </View>
                 )}
             </ScrollView>
+
+            {/* Achievement Modal */}
+            {unlockedAchievement && (
+                <AchievementModal
+                    visible={showAchievementModal}
+                    achievement={unlockedAchievement}
+                    onClose={() => {
+                        setShowAchievementModal(false);
+                        setShowConfetti(false);
+                        router.back();
+                    }}
+                />
+            )}
         </View>
     );
 }
