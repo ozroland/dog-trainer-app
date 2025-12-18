@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, Image, Alert, Modal, TextInput, Dimensions, FlatList, ActivityIndicator, Share, Platform, InteractionManager } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert, Modal, TextInput, Dimensions, FlatList, ActivityIndicator, Share, Platform, InteractionManager, RefreshControl } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "../../../lib/supabase";
@@ -88,6 +88,13 @@ export default function GalleryScreen() {
     const [unlockedAchievement, setUnlockedAchievement] = useState<Achievement | null>(null);
     const [showAchievementModal, setShowAchievementModal] = useState(false);
     const [showUploadOptions, setShowUploadOptions] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchData();
+        setRefreshing(false);
+    }, [id]);
 
     const flatListRef = useRef<FlatList>(null);
 
@@ -399,7 +406,13 @@ export default function GalleryScreen() {
                 </View>
             ) : (
                 // Photo Grid grouped by month
-                <ScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
+                <ScrollView
+                    className="flex-1"
+                    contentContainerStyle={{ padding: 16 }}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />
+                    }
+                >
                     {groupedPhotos.map((group) => (
                         <View key={group.month} className="mb-6">
                             <Text className="text-gray-400 font-semibold mb-3">{group.month}</Text>

@@ -1,12 +1,13 @@
-import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert, RefreshControl } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../../../lib/supabase";
 import { Dog, Achievement, DogAchievement } from "../../../types";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { ScreenHeader } from "../../../components/ScreenHeader";
+import { Skeleton } from "../../../components/ui/Skeleton";
 
 export default function AchievementsScreen() {
     const { t, i18n } = useTranslation();
@@ -17,6 +18,13 @@ export default function AchievementsScreen() {
     const [achievements, setAchievements] = useState<Achievement[]>([]);
     const [unlocked, setUnlocked] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchData();
+        setRefreshing(false);
+    }, [id]);
 
     useEffect(() => {
         fetchData();
@@ -59,7 +67,29 @@ export default function AchievementsScreen() {
     }
 
     if (loading) {
-        return <View className="flex-1 bg-gray-900 items-center justify-center"><Text className="text-white">Loading...</Text></View>;
+        return (
+            <View className="flex-1 bg-gray-900">
+                <ScreenHeader title={t('achievements.title')} />
+                <View className="flex-1 p-6">
+                    {/* Header skeleton */}
+                    <View className="bg-gray-800 p-6 rounded-3xl mb-8 items-center">
+                        <Skeleton width={64} height={64} borderRadius={32} className="mb-2" />
+                        <Skeleton width={150} height={24} className="mb-2" />
+                        <Skeleton width={100} height={16} />
+                    </View>
+                    {/* Achievements grid skeleton */}
+                    <View className="flex-row flex-wrap justify-between">
+                        {[1, 2, 3, 4].map((i) => (
+                            <View key={i} className="w-[48%] mb-4 p-4 rounded-2xl bg-gray-800 border border-gray-700">
+                                <Skeleton width={48} height={48} borderRadius={24} className="mb-3" />
+                                <Skeleton width="80%" height={16} className="mb-2" />
+                                <Skeleton width="60%" height={12} />
+                            </View>
+                        ))}
+                    </View>
+                </View>
+            </View>
+        );
     }
 
     return (
@@ -69,7 +99,12 @@ export default function AchievementsScreen() {
             {/* Standardized Header */}
             <ScreenHeader title={t('achievements.title')} />
 
-            <ScrollView className="flex-1 p-6">
+            <ScrollView
+                className="flex-1 p-6"
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />
+                }
+            >
                 {/* Header Card */}
                 <View className="bg-indigo-600 p-6 rounded-3xl mb-8 items-center">
                     <Text className="text-5xl mb-2">🏆</Text>

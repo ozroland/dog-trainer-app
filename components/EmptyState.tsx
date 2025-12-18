@@ -123,27 +123,29 @@ export function NoHealthRecordsEmptyState({ onAddRecord }: { onAddRecord?: () =>
 }
 
 export function NoEventsEmptyState({ onAddEvent }: { onAddEvent?: () => void }) {
+    const { t } = useTranslation();
     return (
         <EmptyState
             icon="calendar"
             iconColor="#a78bfa"
             iconBgColor="bg-purple-500/20"
-            title="No Events"
-            message="Add events like training sessions, grooming, or vet visits."
-            actionLabel={onAddEvent ? "Add Event" : undefined}
+            title={t('calendar.empty_title')}
+            message={t('calendar.empty_message')}
+            actionLabel={onAddEvent ? t('calendar.add_event') : undefined}
             onAction={onAddEvent}
         />
     );
 }
 
 export function NoLessonsEmptyState() {
+    const { t } = useTranslation();
     return (
         <EmptyState
             icon="book"
             iconColor="#fbbf24"
             iconBgColor="bg-yellow-500/20"
-            title="No Lessons Found"
-            message="Looks like there are no lessons available. Check back later!"
+            title={t('lessons.no_lessons')}
+            message={t('lessons.no_lessons_desc')}
         />
     );
 }

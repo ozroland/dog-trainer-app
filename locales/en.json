@@ -14,7 +14,9 @@
         "notice": "Notice",
         "min": "min",
         "km": "km",
-        "sec": "s"
+        "sec": "s",
+        "soon": "Soon",
+        "clear": "Clear"
     },
     "auth": {
         "login_title": "Welcome Back",
@@ -80,7 +82,9 @@
         "delete_confirm_title": "Delete Account",
         "delete_confirm_message": "This action is irreversible. All your data including dogs and progress will be permanently deleted.",
         "account_deleted": "Account Deleted",
-        "account_deleted_message": "Your account has been permanently deleted."
+        "account_deleted_message": "Your account has been permanently deleted.",
+        "dog": "dog",
+        "dogs": "dogs"
     },
     "dog": {
         "add_new": "Add New Dog",
@@ -109,7 +113,11 @@
         "save_changes": "Save Changes",
         "error_load": "Failed to load dog details",
         "switch": "Switch Dog",
-        "unknown_breed": "Unknown Breed"
+        "unknown_breed": "Unknown Breed",
+        "basic_info": "Basic Info",
+        "details": "Details",
+        "extras": "Extras",
+        "edit_subtitle": "Update your dog's information"
     },
     "health": {
         "title": "Health & Wellness",
@@ -189,7 +197,16 @@
         "complete_success_message": "Lesson completed successfully!",
         "complete_error": "Failed to complete lesson",
         "complete_button": "Complete Lesson",
-        "completed": "Lesson Completed"
+        "completed": "Lesson Completed",
+        "complete": "Complete",
+        "lessons_done": "Lessons Done",
+        "continue": "Continue",
+        "next": "Next",
+        "overview": "Overview",
+        "instructions": "Instructions",
+        "min": "min",
+        "no_lessons": "No Lessons Found",
+        "no_lessons_desc": "Check back later for new lessons"
     },
     "chat": {
         "title": "AI Coach",
@@ -201,7 +218,13 @@
         "coming_soon_message": "We're working on bringing you an AI-powered personal dog trainer. Stay tuned!",
         "feature_1": "24/7 expert training advice",
         "feature_2": "Personalized tips for your dog",
-        "feature_3": "Bark analyzer"
+        "feature_3": "Bark analyzer",
+        "in_development": "In Development",
+        "feature_preview": "Feature Preview",
+        "features_preview": "Features Preview",
+        "preview": "Preview",
+        "sample_ai": "Hi! I'm your AI dog training assistant. How can I help you today?",
+        "sample_user": "How do I teach my dog to sit?"
     },
     "tabs": {
         "home": "Home",
@@ -222,7 +245,18 @@
         "walks": "Most Walks",
         "distance": "Longest Distance",
         "streak": "Best Streak",
-        "lessons": "Most Lessons"
+        "lessons": "Most Lessons",
+        "today": "Today",
+        "this_week": "This Week",
+        "all_time": "All Time",
+        "nearby_rivals": "Nearby Rivals",
+        "rivals_tracking": "Rivals You're Tracking",
+        "track": "Track",
+        "tracking": "Tracking",
+        "unfollow": "Unfollow",
+        "day_streak": "{{count}}-day streak",
+        "walk": "walk",
+        "lesson": "lesson"
     },
     "walk": {
         "poop": "Poop",
@@ -253,6 +287,8 @@
         "recovered_walk": "Walk recovered from previous session"
     },
     "calendar": {
+        "empty_title": "No Events",
+        "empty_message": "Add events like training sessions, grooming, or vet visits.",
         "todays_events": "Today's Events",
         "events_for": "Events for {{date}}",
         "no_events_day": "No events for this day",
@@ -267,6 +303,8 @@
             "training": "Training",
             "grooming": "Grooming",
             "vet_visit": "Vet Visit",
+            "walk": "Walk",
+            "vaccination": "Vaccination",
             "other": "Other"
         },
         "event_details": "Event Details",
@@ -294,9 +332,12 @@
     },
     "stats": {
         "title": "{{name}}'s Stats",
+        "title_short": "Training Stats",
         "lessons_completed": "Lessons Completed",
+        "lessons_short": "Lessons",
         "day_streak": "Day Streak",
         "training_minutes": "Training Minutes",
+        "training_stats": "Training Stats",
         "last_7_days": "Last 7 Days",
         "recent_training_days": "Recent Training Days",
         "recent_walks": "Recent Walks",
@@ -304,7 +345,9 @@
         "no_walks_title": "No Walks Yet",
         "no_walks_message": "Start tracking your walks to see distance, duration, and activity logs.",
         "months": "{{count}} months",
-        "month": "{{count}} month"
+        "month": "{{count}} month",
+        "walks": "Walks",
+        "total_km": "Total km"
     },
     "legal": {
         "last_updated": "Last updated",
@@ -358,7 +401,8 @@
         "set_profile_confirm": "Use this photo as {{name}}'s profile picture?",
         "profile_updated": "Profile photo updated!",
         "shared_from": "Shared from Dog Trainer App",
-        "check_out": "Check out {{name}}!"
+        "check_out": "Check out {{name}}!",
+        "library_permission": "Library permission is required."
     },
     "onboarding": {
         "skip": "Skip",

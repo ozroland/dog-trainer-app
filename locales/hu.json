@@ -14,7 +14,9 @@
         "notice": "Értesítés",
         "min": "perc",
         "km": "km",
-        "sec": "mp"
+        "sec": "mp",
+        "soon": "Hamarosan",
+        "clear": "Törlés"
     },
     "auth": {
         "login_title": "Üdv újra",
@@ -80,7 +82,9 @@
         "delete_confirm_title": "Fiók törlése",
         "delete_confirm_message": "Ez a művelet nem visszavonható. Minden adatod, beleértve a kutyákat és az előrehaladást, véglegesen törlődik.",
         "account_deleted": "Fiók törölve",
-        "account_deleted_message": "A fiókod véglegesen törölve lett."
+        "account_deleted_message": "A fiókod véglegesen törölve lett.",
+        "dog": "kutya",
+        "dogs": "kutya"
     },
     "dog": {
         "add_new": "Új kutya hozzáadása",
@@ -109,7 +113,11 @@
         "save_changes": "Változtatások mentése",
         "error_load": "Nem sikerült betölteni a kutya adatait",
         "switch": "Kutya váltás",
-        "unknown_breed": "Ismeretlen fajta"
+        "unknown_breed": "Ismeretlen fajta",
+        "basic_info": "Alap információk",
+        "details": "Részletek",
+        "extras": "Extrák",
+        "edit_subtitle": "Kutyád adatainak frissítése"
     },
     "health": {
         "title": "Egészség és Jólét",
@@ -189,7 +197,16 @@
         "complete_success_message": "Lecke sikeresen teljesítve!",
         "complete_error": "Nem sikerült befejezni a leckét",
         "complete_button": "Lecke befejezése",
-        "completed": "Lecke teljesítve"
+        "completed": "Lecke teljesítve",
+        "complete": "Teljesítve",
+        "lessons_done": "Teljesített leckék",
+        "continue": "Folytatás",
+        "next": "Következő",
+        "overview": "Áttekintés",
+        "instructions": "Utasítások",
+        "min": "perc",
+        "no_lessons": "Nincs lecke",
+        "no_lessons_desc": "Nézz vissza később új leckékért"
     },
     "chat": {
         "title": "AI Edző",
@@ -201,7 +218,13 @@
         "coming_soon_message": "Dolgozunk azon, hogy AI-alapú személyes kutyaedző álljon rendelkezésedre. Maradj velünk!",
         "feature_1": "0-24 szakértői tanácsok",
         "feature_2": "Személyre szabott tippek kutyádnak",
-        "feature_3": "Ugatás elemző"
+        "feature_3": "Ugatás elemző",
+        "in_development": "Fejlesztés alatt",
+        "feature_preview": "Előzetes",
+        "features_preview": "Funkciók előnézete",
+        "preview": "Előnézet",
+        "sample_ai": "Szia! Én vagyok az AI kutyakiképző asszisztensed. Miben segíthetek ma?",
+        "sample_user": "Hogyan taníthatom meg a kutyámat ülni?"
     },
     "tabs": {
         "home": "Főoldal",
@@ -222,7 +245,18 @@
         "walks": "Legtöbb séta",
         "distance": "Leghosszabb távolság",
         "streak": "Legjobb sorozat",
-        "lessons": "Legtöbb lecke"
+        "lessons": "Legtöbb lecke",
+        "today": "Ma",
+        "this_week": "Ezen a héten",
+        "all_time": "Összesen",
+        "nearby_rivals": "Közeli riválisok",
+        "rivals_tracking": "Követett riválisok",
+        "track": "Követés",
+        "tracking": "Követve",
+        "unfollow": "Kikövetés",
+        "day_streak": "{{count}} nap ",
+        "walk": "séta",
+        "lesson": "Lecke"
     },
     "walk": {
         "poop": "Kaki",
@@ -253,6 +287,8 @@
         "recovered_walk": "Séta visszaállítva az előző munkamenetből"
     },
     "calendar": {
+        "empty_title": "Nincs esemény",
+        "empty_message": "Adj hozzá eseményeket, mint edzéseket, kutyakozmetikát vagy állatorvosi látogatásokat.",
         "todays_events": "Mai események",
         "events_for": "Események ekkor: {{date}}",
         "no_events_day": "Nincs esemény ezen a napon",
@@ -267,6 +303,8 @@
             "training": "Kiképzés",
             "grooming": "Kozmetika",
             "vet_visit": "Állatorvos",
+            "walk": "Séta",
+            "vaccination": "Oltás",
             "other": "Egyéb"
         },
         "event_details": "Esemény részletei",
@@ -304,7 +342,12 @@
         "no_walks_title": "Még nincsenek séták",
         "no_walks_message": "Kezdj el sétákat követni, hogy lásd a távolságot, időtartamot és aktivitásokat.",
         "months": "{{count}} hónap",
-        "month": "{{count}} hónap"
+        "month": "{{count}} hónap",
+        "title_short": "Edzési statisztikák",
+        "lessons_short": "Leckék",
+        "training_stats": "Edzési statisztikák",
+        "walks": "Séták",
+        "total_km": "Összes km"
     },
     "legal": {
         "last_updated": "Utoljára frissítve",
@@ -358,7 +401,8 @@
         "set_profile_confirm": "{{name}} profilképeként szeretnéd használni?",
         "profile_updated": "Profilkép frissítve!",
         "shared_from": "A Dog Trainer alkalmazásból megosztva",
-        "check_out": "Nézd meg {{name}}-t!"
+        "check_out": "Nézd meg {{name}}-t!",
+        "library_permission": "Galéria engedély szükséges."
     },
     "onboarding": {
         "skip": "Kihagyás",
