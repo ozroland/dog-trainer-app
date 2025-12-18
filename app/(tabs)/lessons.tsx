@@ -13,7 +13,7 @@ import haptics from "../../lib/haptics";
 type DifficultyLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 
 const difficultyConfig: Record<DifficultyLevel, { color: string; bgColor: string; icon: keyof typeof Ionicons.glyphMap; label: string }> = {
-    Beginner: { color: '#4ade80', bgColor: 'rgba(74, 222, 128, 0.15)', icon: 'leaf', label: 'Beginner' },
+    Beginner: { color: '#60a5fa', bgColor: 'rgba(96, 165, 250, 0.15)', icon: 'leaf', label: 'Beginner' },
     Intermediate: { color: '#fbbf24', bgColor: 'rgba(251, 191, 36, 0.15)', icon: 'flash', label: 'Intermediate' },
     Advanced: { color: '#f87171', bgColor: 'rgba(248, 113, 113, 0.15)', icon: 'flame', label: 'Advanced' },
 };

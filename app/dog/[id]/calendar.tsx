@@ -28,7 +28,6 @@ export default function CalendarScreen() {
     // Modal states
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<any>(null);
-    const [showAddOptions, setShowAddOptions] = useState(false);
 
     // Tab state for switching between views
     const [activeTab, setActiveTab] = useState<'calendar' | 'upcoming'>('calendar');
@@ -281,7 +280,7 @@ export default function CalendarScreen() {
                 title={t('calendar.calendar_health_title')}
                 rightAction={{
                     icon: 'add',
-                    onPress: () => setShowAddOptions(true),
+                    onPress: () => router.push(`/dog/${id}/add-event`),
                 }}
             />
 
@@ -367,7 +366,7 @@ export default function CalendarScreen() {
                                     </View>
                                     <Text className="text-gray-400 text-center">{t('calendar.no_events_day')}</Text>
                                     <TouchableOpacity
-                                        onPress={() => setShowAddOptions(true)}
+                                        onPress={() => router.push(`/dog/${id}/add-event`)}
                                         className="mt-4 flex-row items-center"
                                     >
                                         <Ionicons name="add-circle" size={20} color="#818cf8" />
@@ -392,7 +391,7 @@ export default function CalendarScreen() {
                                 <Text className="text-white font-semibold text-lg mb-2">{t('calendar.no_upcoming_events')}</Text>
                                 <Text className="text-gray-400 text-center mb-4">Schedule your next vet visit or training session</Text>
                                 <TouchableOpacity
-                                    onPress={() => setShowAddOptions(true)}
+                                    onPress={() => router.push(`/dog/${id}/add-event`)}
                                     className="bg-indigo-500 px-6 py-3 rounded-xl flex-row items-center"
                                 >
                                     <Ionicons name="add" size={20} color="white" />
@@ -482,62 +481,6 @@ export default function CalendarScreen() {
                 </View>
             </Modal>
 
-            {/* Add Options Modal */}
-            <Modal visible={showAddOptions} transparent animationType="slide">
-                <TouchableOpacity
-                    activeOpacity={1}
-                    onPress={() => setShowAddOptions(false)}
-                    className="flex-1 bg-black/70 justify-end"
-                >
-                    <View
-                        className="bg-gray-900 rounded-t-[32px] p-6 border-t border-gray-700/50"
-                        style={{ paddingBottom: insets.bottom + 20 }}
-                    >
-                        {/* Handle bar */}
-                        <View className="items-center mb-6">
-                            <View className="w-10 h-1 bg-gray-600 rounded-full" />
-                        </View>
-
-                        <Text className="text-white text-xl font-bold text-center mb-6">{t('calendar.add_new')}</Text>
-
-                        <TouchableOpacity
-                            onPress={() => {
-                                setShowAddOptions(false);
-                                router.push(`/dog/${id}/add-event`);
-                            }}
-                            className="bg-gradient-to-r from-purple-600 to-indigo-600 p-5 rounded-2xl flex-row items-center mb-3"
-                            style={{ backgroundColor: '#7c3aed' }}
-                        >
-                            <View className="bg-white/20 p-3 rounded-xl mr-4">
-                                <Ionicons name="calendar" size={26} color="white" />
-                            </View>
-                            <View className="flex-1">
-                                <Text className="text-white font-bold text-lg">{t('calendar.add_event')}</Text>
-                                <Text className="text-white/70 text-sm">{t('calendar.add_event_desc')}</Text>
-                            </View>
-                            <Ionicons name="chevron-forward" size={22} color="rgba(255,255,255,0.5)" />
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            onPress={() => {
-                                setShowAddOptions(false);
-                                router.push(`/dog/${id}/add-health`);
-                            }}
-                            className="p-5 rounded-2xl flex-row items-center border border-gray-700"
-                            style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
-                        >
-                            <View className="bg-red-500/20 p-3 rounded-xl mr-4">
-                                <Ionicons name="medical" size={26} color="#f87171" />
-                            </View>
-                            <View className="flex-1">
-                                <Text className="text-white font-bold text-lg">{t('health.add_record')}</Text>
-                                <Text className="text-gray-400 text-sm">{t('health.add_record_desc')}</Text>
-                            </View>
-                            <Ionicons name="chevron-forward" size={22} color="#6b7280" />
-                        </TouchableOpacity>
-                    </View>
-                </TouchableOpacity>
-            </Modal>
         </View >
     );
 }

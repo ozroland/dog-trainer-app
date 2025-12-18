@@ -55,10 +55,11 @@ export default function Layout() {
         return () => subscription.unsubscribe();
     }, []);
 
-    // Check onboarding status - re-check when segments change to catch when onboarding completes
+    // Check onboarding status at mount and when leaving onboarding screen
+    const inOnboarding = segments[0] === 'onboarding';
     useEffect(() => {
         hasCompletedOnboarding().then(setOnboardingCompleted);
-    }, [segments]);
+    }, [inOnboarding]);
 
     // Initialize sync service and check for crashed walks
     useEffect(() => {
@@ -110,7 +111,6 @@ export default function Layout() {
         if (!initialized || !fontsLoaded || onboardingCompleted === null) return;
 
         const inAuthGroup = segments[0] === 'auth';
-        const inOnboarding = segments[0] === 'onboarding';
 
         // Check onboarding first
         if (!onboardingCompleted && !inOnboarding) {
@@ -125,7 +125,7 @@ export default function Layout() {
             // Redirect to login if not logged in and trying to access protected route
             router.replace('/auth');
         }
-    }, [session, initialized, segments, fontsLoaded, onboardingCompleted]);
+    }, [session, initialized, segments, fontsLoaded, onboardingCompleted, inOnboarding]);
 
     // Optional: Show a loading indicator only if not initialized yet
     if (!initialized) {

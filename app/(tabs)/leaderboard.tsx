@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Alert, Animated, Easing } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Alert, Animated, Easing, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -43,6 +43,45 @@ function getBreedIcon(dogName: string): string {
         if (lowName.includes(breed)) return icon;
     }
     return breedIcons.default;
+}
+
+// Dog Avatar component - shows photo or fallback emoji
+function DogAvatar({ photoUrl, dogName, size = 56, borderColor }: {
+    photoUrl: string | null | undefined;
+    dogName: string;
+    size?: number;
+    borderColor?: string
+}) {
+    if (photoUrl) {
+        return (
+            <Image
+                source={{ uri: photoUrl }}
+                style={{
+                    width: size,
+                    height: size,
+                    borderRadius: size / 2,
+                    borderWidth: 2,
+                    borderColor: borderColor || 'rgba(55, 65, 81, 0.5)'
+                }}
+            />
+        );
+    }
+    return (
+        <View
+            style={{
+                width: size,
+                height: size,
+                borderRadius: size / 2,
+                borderWidth: 2,
+                borderColor: borderColor || 'rgba(55, 65, 81, 0.5)',
+                backgroundColor: 'rgba(31, 41, 55, 0.8)',
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}
+        >
+            <Text style={{ fontSize: size * 0.5 }}>{getBreedIcon(dogName)}</Text>
+        </View>
+    );
 }
 
 // Simple Sparkline component
@@ -270,6 +309,23 @@ export default function LeaderboardScreen() {
     const categoryInfo = getCategoryInfo(selectedCategory);
     const config = categoryConfig[selectedCategory];
 
+    // Local formatScore function using translations
+    const formatScore = (score: number, category: LeaderboardCategory): string => {
+        switch (category) {
+            case 'walks':
+                return `${score} ${t('leaderboard.walk')}`;
+            case 'distance':
+                if (score >= 1000) return `${(score / 1000).toFixed(1)} ${t('common.km')}`;
+                return `${score} m`;
+            case 'streak':
+                return t('leaderboard.day_streak', { count: score });
+            case 'lessons':
+                return `${score} ${t('leaderboard.lesson')}`;
+            default:
+                return `${score}`;
+        }
+    };
+
     // Find current user's entry
     const currentUserEntry = useMemo(() => {
         return entries.find(e => e.isCurrentUser);
@@ -304,14 +360,14 @@ export default function LeaderboardScreen() {
     const formatGap = (gap: number, category: LeaderboardCategory): string => {
         switch (category) {
             case 'distance':
-                if (gap >= 1000) return `${(gap / 1000).toFixed(1)}km`;
-                return `${Math.round(gap)}m`;
+                if (gap >= 1000) return `${(gap / 1000).toFixed(1)} ${t('common.km')}`;
+                return `${Math.round(gap)} m`;
             case 'walks':
-                return `${gap} walk${gap !== 1 ? 's' : ''}`;
+                return `${gap} ${t('leaderboard.walk')}`;
             case 'streak':
-                return `${gap} day${gap !== 1 ? 's' : ''}`;
+                return t('leaderboard.day_streak', { count: gap });
             case 'lessons':
-                return `${gap} lesson${gap !== 1 ? 's' : ''}`;
+                return `${gap} ${t('leaderboard.lesson')}`;
             default:
                 return `${gap}`;
         }
@@ -357,11 +413,13 @@ export default function LeaderboardScreen() {
                         <View key={index} className="items-center mx-1 relative" style={{ width: 105 }}>
                             <CelebrationBadge visible={entry.isNewRecord || false} />
                             <Text className="text-2xl mb-1">{emoji}</Text>
-                            <View
-                                className="w-14 h-14 rounded-full items-center justify-center mb-1 border-2"
-                                style={{ borderColor: color, backgroundColor: 'rgba(31, 41, 55, 0.8)' }}
-                            >
-                                <Text className="text-2xl">{getBreedIcon(entry.dogName)}</Text>
+                            <View className="mb-1">
+                                <DogAvatar
+                                    photoUrl={entry.photoUrl}
+                                    dogName={entry.dogName}
+                                    size={56}
+                                    borderColor={color}
+                                />
                             </View>
                             <Text className="text-white font-bold text-center text-sm" numberOfLines={1}>
                                 {entry.dogName}
@@ -380,7 +438,7 @@ export default function LeaderboardScreen() {
                                 style={{ height, backgroundColor: config.bgColor, borderTopWidth: 3, borderColor: color }}
                             >
                                 <Text className="text-white font-bold text-sm text-center" numberOfLines={2}>
-                                    {categoryInfo.formatScore(entry.score)}
+                                    {formatScore(entry.score, selectedCategory)}
                                 </Text>
                                 {/* Sparkline */}
                                 {entry.weeklyActivity && entry.weeklyActivity.length >= 2 && (
@@ -417,13 +475,15 @@ export default function LeaderboardScreen() {
                                 {entryWithGap.rank}
                             </Text>
                         </View>
-                        <Text className="text-2xl mr-3">{getBreedIcon(entryWithGap.dogName)}</Text>
+                        <View className="mr-3">
+                            <DogAvatar photoUrl={entryWithGap.photoUrl} dogName={entryWithGap.dogName} size={44} borderColor="#818cf8" />
+                        </View>
                         <View className="flex-1">
                             <Text className="text-indigo-300 font-bold text-base">
                                 {entryWithGap.dogName}
                             </Text>
                             <Text className="text-indigo-400/70 text-sm">
-                                {categoryInfo.formatScore(entryWithGap.score)}
+                                {formatScore(entryWithGap.score, selectedCategory)}
                             </Text>
                         </View>
                         {entryWithGap.gapToNext > 0 && entryWithGap.nextName && (
@@ -456,7 +516,7 @@ export default function LeaderboardScreen() {
             <View className="mx-4 mb-4">
                 <View className="flex-row items-center mb-3">
                     <Ionicons name="heart" size={18} color="#f472b6" />
-                    <Text className="text-pink-400 font-bold text-base ml-2">Rivals You're Tracking</Text>
+                    <Text className="text-pink-400 font-bold text-base ml-2">{t('leaderboard.rivals_tracking')}</Text>
                 </View>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     {followedEntries.map((entry) => (
@@ -466,7 +526,9 @@ export default function LeaderboardScreen() {
                             style={{ width: 150 }}
                         >
                             <View className="flex-row items-center mb-2">
-                                <Text className="text-xl mr-2">{getBreedIcon(entry.dogName)}</Text>
+                                <View className="mr-2">
+                                    <DogAvatar photoUrl={entry.photoUrl} dogName={entry.dogName} size={32} />
+                                </View>
                                 <View className="flex-1">
                                     <Text className="text-white font-semibold text-sm" numberOfLines={1}>
                                         {entry.dogName}
@@ -476,13 +538,25 @@ export default function LeaderboardScreen() {
                                 {renderTrendIndicator(entry)}
                             </View>
                             <Text className="text-white text-sm font-medium">
-                                {categoryInfo.formatScore(entry.score)}
+                                {formatScore(entry.score, selectedCategory)}
                             </Text>
                             {entry.weeklyActivity && entry.weeklyActivity.length >= 2 && (
                                 <View className="mt-2">
                                     <Sparkline data={entry.weeklyActivity} color="#f472b6" width={120} height={20} />
                                 </View>
                             )}
+                            {/* Unfollow button */}
+                            <TouchableOpacity
+                                onPress={() => handleFollow(entry.dogId, true)}
+                                className="mt-2 py-1.5 rounded-lg items-center bg-pink-500/20"
+                            >
+                                <View className="flex-row items-center">
+                                    <Ionicons name="heart-dislike-outline" size={14} color="#f472b6" />
+                                    <Text className="text-pink-400 text-xs font-semibold ml-1">
+                                        {t('leaderboard.unfollow') || 'Unfollow'}
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
                         </View>
                     ))}
                 </ScrollView>
@@ -497,7 +571,7 @@ export default function LeaderboardScreen() {
             <View className="mx-4 mb-4">
                 <View className="flex-row items-center mb-3">
                     <Ionicons name="people" size={18} color="#f59e0b" />
-                    <Text className="text-amber-400 font-bold text-base ml-2">Nearby Rivals</Text>
+                    <Text className="text-amber-400 font-bold text-base ml-2">{t('leaderboard.nearby_rivals')}</Text>
                 </View>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     {nearbyRivals.map((rival) => {
@@ -510,7 +584,9 @@ export default function LeaderboardScreen() {
                                 style={{ width: 150 }}
                             >
                                 <View className="flex-row items-center mb-2">
-                                    <Text className="text-xl mr-2">{getBreedIcon(rival.dogName)}</Text>
+                                    <View className="mr-2">
+                                        <DogAvatar photoUrl={rival.photoUrl} dogName={rival.dogName} size={32} />
+                                    </View>
                                     <View className="flex-1">
                                         <Text className="text-white font-semibold text-sm" numberOfLines={1}>
                                             {rival.dogName}
@@ -520,7 +596,7 @@ export default function LeaderboardScreen() {
                                 </View>
                                 <View className="flex-row items-center justify-between">
                                     <Text className="text-white text-sm font-medium">
-                                        {categoryInfo.formatScore(rival.score)}
+                                        {formatScore(rival.score, selectedCategory)}
                                     </Text>
                                     <View className={`flex-row items-center px-2 py-0.5 rounded-full ${isAhead ? 'bg-red-500/20' : 'bg-green-500/20'}`}>
                                         <Ionicons name={isAhead ? 'arrow-up' : 'arrow-down'} size={12} color={isAhead ? '#ef4444' : '#22c55e'} />
@@ -541,7 +617,7 @@ export default function LeaderboardScreen() {
                                             color={rival.isFollowed ? '#f472b6' : '#9ca3af'}
                                         />
                                         <Text className={`text-xs font-semibold ml-1 ${rival.isFollowed ? 'text-pink-400' : 'text-gray-400'}`}>
-                                            {rival.isFollowed ? 'Tracking' : 'Track'}
+                                            {rival.isFollowed ? t('leaderboard.tracking') : t('leaderboard.track')}
                                         </Text>
                                     </View>
                                 </TouchableOpacity>
@@ -573,8 +649,10 @@ export default function LeaderboardScreen() {
                     </Text>
                 </View>
 
-                {/* Breed Icon */}
-                <Text className="text-xl mr-3">{getBreedIcon(entry.dogName)}</Text>
+                {/* Dog Avatar */}
+                <View className="mr-3">
+                    <DogAvatar photoUrl={entry.photoUrl} dogName={entry.dogName} size={40} />
+                </View>
 
                 {/* Info */}
                 <View className="flex-1">
@@ -603,7 +681,7 @@ export default function LeaderboardScreen() {
                         <Sparkline data={entry.weeklyActivity} color={config.color} width={50} height={16} />
                     )}
                     <Text className={`font-bold text-base mt-1 ${entry.isCurrentUser ? 'text-indigo-300' : 'text-white'}`}>
-                        {categoryInfo.formatScore(entry.score)}
+                        {formatScore(entry.score, selectedCategory)}
                     </Text>
                     {entry.gapToNext > 0 && entry.nextName && !entry.isCurrentUser && entry.rank > 3 && (
                         <Text className="text-gray-500 text-xs">
@@ -707,7 +785,7 @@ export default function LeaderboardScreen() {
                             className={`flex-1 py-2.5 rounded-lg items-center ${timeFilter === filter ? 'bg-indigo-500' : ''}`}
                         >
                             <Text className={`font-semibold text-sm ${timeFilter === filter ? 'text-white' : 'text-gray-400'}`}>
-                                {filter === 'daily' ? 'Today' : filter === 'weekly' ? 'This Week' : 'All Time'}
+                                {filter === 'daily' ? t('leaderboard.today') : filter === 'weekly' ? t('leaderboard.this_week') : t('leaderboard.all_time')}
                             </Text>
                         </TouchableOpacity>
                     ))}
@@ -756,7 +834,7 @@ export default function LeaderboardScreen() {
                                     color={isSelected ? catConfig.color : '#6b7280'}
                                 />
                                 <Text
-                                    className={`text-xs mt-1 font-semibold ${isSelected ? '' : 'text-gray-500'}`}
+                                    className={`text-xs mt-1 font-semibold text-center ${isSelected ? '' : 'text-gray-500'}`}
                                     style={isSelected ? { color: catConfig.color } : {}}
                                 >
                                     {t(`leaderboard.${category}`)}

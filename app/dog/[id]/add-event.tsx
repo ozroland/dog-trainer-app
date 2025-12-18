@@ -10,12 +10,14 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { scheduleReminder } from "../../../lib/notifications";
 import { ScreenHeader } from "../../../components/ScreenHeader";
 
-type EventType = 'training' | 'grooming' | 'vet_visit' | 'other';
+type EventType = 'training' | 'grooming' | 'vet_visit' | 'walk' | 'vaccination' | 'other';
 
 const eventTypeConfig: Record<EventType, { icon: keyof typeof Ionicons.glyphMap; color: string; bgColor: string }> = {
     training: { icon: 'barbell', color: '#fbbf24', bgColor: 'rgba(251, 191, 36, 0.15)' },
     grooming: { icon: 'cut', color: '#f472b6', bgColor: 'rgba(244, 114, 182, 0.15)' },
     vet_visit: { icon: 'medkit', color: '#60a5fa', bgColor: 'rgba(96, 165, 250, 0.15)' },
+    walk: { icon: 'walk', color: '#4ade80', bgColor: 'rgba(74, 222, 128, 0.15)' },
+    vaccination: { icon: 'fitness', color: '#f97316', bgColor: 'rgba(249, 115, 22, 0.15)' },
     other: { icon: 'calendar', color: '#a78bfa', bgColor: 'rgba(167, 139, 250, 0.15)' },
 };
 
@@ -120,19 +122,23 @@ export default function AddEventScreen() {
                     />
                 </View>
 
-                {/* Type Selection - Visual Cards */}
+                {/* Type Selection - Visual Cards (2x3 Grid) */}
                 <Text className="text-gray-400 text-sm font-semibold mb-3 uppercase tracking-wider">{t('health.type')}</Text>
-                <View className="flex-row mb-6 gap-2">
-                    {(['training', 'grooming', 'vet_visit', 'other'] as const).map((type) => {
+                <View className="flex-row flex-wrap mb-6" style={{ marginHorizontal: -4 }}>
+                    {(['training', 'grooming', 'vet_visit', 'walk', 'vaccination', 'other'] as const).map((type) => {
                         const typeConfig = eventTypeConfig[type];
                         const isSelected = eventType === type;
                         return (
                             <TouchableOpacity
                                 key={type}
                                 onPress={() => setEventType(type)}
-                                className={`flex-1 p-3 rounded-2xl items-center border-2 ${isSelected ? 'border-indigo-500' : 'border-transparent'
+                                className={`p-3 rounded-2xl items-center border-2 mb-2 ${isSelected ? 'border-indigo-500' : 'border-transparent'
                                     }`}
-                                style={{ backgroundColor: isSelected ? typeConfig.bgColor : 'rgba(31, 41, 55, 0.5)' }}
+                                style={{
+                                    backgroundColor: isSelected ? typeConfig.bgColor : 'rgba(31, 41, 55, 0.5)',
+                                    width: '31%',
+                                    marginHorizontal: '1%'
+                                }}
                             >
                                 <View
                                     style={{ backgroundColor: typeConfig.bgColor, width: 40, height: 40, borderRadius: 12 }}

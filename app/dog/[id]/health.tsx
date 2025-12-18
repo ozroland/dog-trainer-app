@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, Alert, Modal, TextInput, Platform } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Alert, Modal, TextInput, Platform, RefreshControl } from "react-native";
 import { useTranslation } from "react-i18next";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from "date-fns";
@@ -25,6 +25,13 @@ export default function HealthScreen() {
     const [loading, setLoading] = useState(true);
     const { t, i18n } = useTranslation();
     const dateLocale = i18n.language === 'hu' ? 'hu-HU' : 'en-US';
+    const [refreshing, setRefreshing] = useState(false);
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchHealthData();
+        setRefreshing(false);
+    }, [id]);
 
     // Modal States
     const [showWeightModal, setShowWeightModal] = useState(false);
@@ -47,7 +54,7 @@ export default function HealthScreen() {
         if (action === 'log_weight') {
             setShowWeightModal(true);
         } else if (action === 'add_record') {
-            router.push(`/dog/${id}/add-health`);
+            router.push(`/dog/${id}/add-event`);
         }
     }, [action]);
 
@@ -111,7 +118,7 @@ export default function HealthScreen() {
         }
     }
 
-    // handleAddHealthRecord REMOVED (Moved to add-health.tsx)
+    // handleAddHealthRecord REMOVED (Moved to add-event.tsx)
 
     async function handleDeleteHealthRecord(recordId: string) {
         Alert.alert(
@@ -197,7 +204,12 @@ export default function HealthScreen() {
                 </View>
             </View>
 
-            <ScrollView className="flex-1 p-6">
+            <ScrollView
+                className="flex-1 p-6"
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />
+                }
+            >
 
 
 
@@ -245,7 +257,7 @@ export default function HealthScreen() {
                         <Text className="text-white text-xl font-bold">{t('health.records')}</Text>
                         <TouchableOpacity
                             onPress={() => {
-                                router.push(`/dog/${id}/add-health`);
+                                router.push(`/dog/${id}/add-event`);
                             }}
                             className="w-8 h-8 bg-gray-800 rounded-full items-center justify-center"
                         >
@@ -254,7 +266,7 @@ export default function HealthScreen() {
                     </View>
 
                     {healthRecords.length === 0 ? (
-                        <NoHealthRecordsEmptyState onAddRecord={() => router.push(`/dog/${id}/add-health`)} />
+                        <NoHealthRecordsEmptyState onAddRecord={() => router.push(`/dog/${id}/add-event`)} />
                     ) : (
                         healthRecords.map(record => (
                             <TouchableOpacity

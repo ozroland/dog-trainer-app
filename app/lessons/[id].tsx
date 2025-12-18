@@ -1,6 +1,6 @@
-import { View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Animated } from "react-native";
 import { Stack, useRouter, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import { Lesson, Achievement } from "../../types";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -11,6 +11,39 @@ import { Confetti } from "../../components/Confetti";
 import { AchievementModal } from "../../components/AchievementModal";
 import { checkAndUnlockAchievements } from "../../lib/achievements";
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+
+type DifficultyLevel = 'Beginner' | 'Intermediate' | 'Advanced';
+
+const difficultyConfig: Record<DifficultyLevel, {
+    color: string;
+    bgColor: string;
+    gradientColors: [string, string];
+    icon: keyof typeof Ionicons.glyphMap;
+    label: string;
+}> = {
+    Beginner: {
+        color: '#60a5fa',
+        bgColor: 'rgba(96, 165, 250, 0.15)',
+        gradientColors: ['#1e40af', '#1e3a8a'],
+        icon: 'leaf',
+        label: 'Beginner'
+    },
+    Intermediate: {
+        color: '#fbbf24',
+        bgColor: 'rgba(251, 191, 36, 0.15)',
+        gradientColors: ['#92400e', '#78350f'],
+        icon: 'flash',
+        label: 'Intermediate'
+    },
+    Advanced: {
+        color: '#f87171',
+        bgColor: 'rgba(248, 113, 113, 0.15)',
+        gradientColors: ['#991b1b', '#7f1d1d'],
+        icon: 'flame',
+        label: 'Advanced'
+    },
+};
 
 export default function LessonDetailScreen() {
     const { t, i18n } = useTranslation();
@@ -25,9 +58,40 @@ export default function LessonDetailScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
 
+    // Animations
+    const iconScale = useRef(new Animated.Value(0)).current;
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(30)).current;
+
     useEffect(() => {
         fetchLesson();
     }, [id]);
+
+    useEffect(() => {
+        if (lesson) {
+            // Animate icon
+            Animated.spring(iconScale, {
+                toValue: 1,
+                tension: 50,
+                friction: 7,
+                useNativeDriver: true,
+            }).start();
+
+            // Fade in content
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 400,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(slideAnim, {
+                    toValue: 0,
+                    duration: 400,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        }
+    }, [lesson]);
 
     async function fetchLesson() {
         try {
@@ -66,7 +130,6 @@ export default function LessonDetailScreen() {
         try {
             setCompleting(true);
 
-            // 1. Insert progress
             const { error } = await supabase
                 .from('progress')
                 .insert({
@@ -77,7 +140,7 @@ export default function LessonDetailScreen() {
                 });
 
             if (error) {
-                if (error.code === '23505') { // Unique violation (already completed)
+                if (error.code === '23505') {
                     setIsCompleted(true);
                     return;
                 }
@@ -85,23 +148,18 @@ export default function LessonDetailScreen() {
             }
 
             setIsCompleted(true);
-
-            // 2. Confetti and haptic celebration!
             setShowConfetti(true);
             await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-            // 3. Check for new achievements
             if (dogId) {
                 const { newlyUnlocked } = await checkAndUnlockAchievements(dogId as string);
                 if (newlyUnlocked.length > 0) {
-                    // Show the first unlocked achievement
                     setUnlockedAchievement(newlyUnlocked[0]);
                     setShowAchievementModal(true);
-                    return; // Don't go back yet, let the modal handle navigation
+                    return;
                 }
             }
 
-            // 4. Show success message and go back
             Alert.alert(t('lessons.complete_success_title'), t('lessons.complete_success_message'));
             setTimeout(() => {
                 setShowConfetti(false);
@@ -119,92 +177,185 @@ export default function LessonDetailScreen() {
     if (loading || !lesson) {
         return (
             <View className="flex-1 bg-gray-900 items-center justify-center">
-                <ActivityIndicator color="#4f46e5" />
+                <ActivityIndicator color="#818cf8" size="large" />
             </View>
         );
     }
+
+    const config = difficultyConfig[lesson.difficulty as DifficultyLevel] || difficultyConfig.Beginner;
+    const lessonTitle = i18n.language === 'hu' && lesson.title_hu ? lesson.title_hu : lesson.title;
+    const lessonDescription = i18n.language === 'hu' && lesson.description_hu ? lesson.description_hu : lesson.description;
+    const lessonContent = i18n.language === 'hu' && lesson.content_markdown_hu ? lesson.content_markdown_hu : lesson.content_markdown;
 
     return (
         <View className="flex-1 bg-gray-900">
             <Confetti visible={showConfetti} />
             <Stack.Screen options={{ headerShown: false }} />
 
-            {/* Header */}
-            <View
-                className="bg-gray-800 border-b border-gray-700"
-                style={{ paddingTop: insets.top }}
+            <ScrollView
+                className="flex-1"
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 120 }}
             >
-                <View className="flex-row items-center px-4 h-14">
-                    <TouchableOpacity
-                        onPress={() => router.back()}
-                        className="mr-4 w-10 h-10 items-center justify-center rounded-full bg-gray-700"
-                    >
-                        <Ionicons name="arrow-back" size={24} color="white" />
-                    </TouchableOpacity>
-                    <Text className="text-white text-lg font-semibold flex-1 text-center mr-14" numberOfLines={1}>
-                        {i18n.language === 'hu' && lesson.title_hu ? lesson.title_hu : lesson.title}
-                    </Text>
-                </View>
-            </View>
-
-            <ScrollView className="flex-1 px-6 py-6">
-                <View className="flex-row justify-between items-start mb-6">
-                    <View className={`px-3 py-1 rounded-full ${lesson.difficulty === 'Beginner' ? 'bg-green-500/20' :
-                        lesson.difficulty === 'Intermediate' ? 'bg-yellow-500/20' : 'bg-red-500/20'
-                        }`}>
-                        <Text className={`text-xs font-bold ${lesson.difficulty === 'Beginner' ? 'text-green-400' :
-                            lesson.difficulty === 'Intermediate' ? 'text-yellow-400' : 'text-red-400'
-                            }`}>{t(`lessons.${lesson.difficulty.toLowerCase()}`)}</Text>
+                {/* Hero Header */}
+                <LinearGradient
+                    colors={config.gradientColors}
+                    className="pt-0 pb-8 px-4"
+                    style={{ paddingTop: insets.top }}
+                >
+                    {/* Back Button */}
+                    <View className="flex-row items-center h-14">
+                        <TouchableOpacity
+                            onPress={() => router.back()}
+                            className="w-10 h-10 items-center justify-center rounded-full bg-black/20"
+                        >
+                            <Ionicons name="arrow-back" size={24} color="white" />
+                        </TouchableOpacity>
                     </View>
-                    <View className="flex-row items-center">
-                        <Ionicons name="time-outline" size={16} color="#9ca3af" />
-                        <Text className="text-gray-400 ml-1">{t('lessons.minutes', { count: lesson.duration_minutes })}</Text>
+
+                    {/* Lesson Icon */}
+                    <View className="items-center mt-4 mb-6">
+                        <Animated.View
+                            className="w-24 h-24 rounded-3xl items-center justify-center"
+                            style={[
+                                { backgroundColor: 'rgba(255,255,255,0.15)', transform: [{ scale: iconScale }] }
+                            ]}
+                        >
+                            <Ionicons name={config.icon} size={48} color="white" />
+                        </Animated.View>
                     </View>
-                </View>
 
-                <Text className="text-gray-300 text-lg mb-8 leading-relaxed">
-                    {i18n.language === 'hu' && lesson.description_hu ? lesson.description_hu : lesson.description}
-                </Text>
+                    {/* Title & Meta */}
+                    <View className="items-center">
+                        <Text className="text-white text-2xl font-bold text-center mb-3" numberOfLines={2}>
+                            {lessonTitle}
+                        </Text>
+                        <View className="flex-row items-center">
+                            <View
+                                className="px-3 py-1.5 rounded-full mr-3"
+                                style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+                            >
+                                <Text className="text-white text-sm font-semibold">
+                                    {t(`lessons.${lesson.difficulty.toLowerCase()}`)}
+                                </Text>
+                            </View>
+                            <View className="flex-row items-center px-3 py-1.5 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
+                                <Ionicons name="time-outline" size={16} color="white" />
+                                <Text className="text-white text-sm font-semibold ml-1.5">
+                                    {lesson.duration_minutes} {t('common.min')}
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
 
-                <View className="bg-gray-800 p-4 rounded-2xl mb-8">
-                    <Markdown
-                        style={{
-                            body: { color: '#e5e7eb', fontSize: 16, lineHeight: 24 },
-                            heading1: { color: 'white', fontSize: 24, fontWeight: 'bold', marginBottom: 16, marginTop: 8 },
-                            heading2: { color: 'white', fontSize: 20, fontWeight: 'bold', marginBottom: 12, marginTop: 16 },
-                            listItem: { color: '#e5e7eb' },
-                            strong: { color: 'white', fontWeight: 'bold' },
-                        }}
-                    >
-                        {i18n.language === 'hu' && lesson.content_markdown_hu ? lesson.content_markdown_hu : lesson.content_markdown}
-                    </Markdown>
-                </View>
+                    {/* Completed Badge */}
+                    {isCompleted && (
+                        <View className="mt-4 items-center">
+                            <View className="flex-row items-center bg-green-500/30 px-4 py-2 rounded-full">
+                                <Ionicons name="checkmark-circle" size={20} color="#4ade80" />
+                                <Text className="text-green-400 font-bold ml-2">{t('lessons.completed')}</Text>
+                            </View>
+                        </View>
+                    )}
+                </LinearGradient>
 
-                {/* Complete Button */}
-                {!isCompleted && dogId && (
+                {/* Content Section */}
+                <Animated.View
+                    className="px-4 mt-4"
+                    style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
+                >
+                    {/* Description Card */}
+                    <View className="bg-gray-800/80 rounded-3xl p-5 mb-4 border border-gray-700/50">
+                        <View className="flex-row items-center mb-3">
+                            <View className="w-8 h-8 rounded-full items-center justify-center mr-3" style={{ backgroundColor: config.bgColor }}>
+                                <Ionicons name="document-text" size={16} color={config.color} />
+                            </View>
+                            <Text className="text-white font-bold text-lg">{t('lessons.overview') || 'Overview'}</Text>
+                        </View>
+                        <Text className="text-gray-300 text-base leading-relaxed">
+                            {lessonDescription}
+                        </Text>
+                    </View>
+
+                    {/* Instructions Card */}
+                    <View className="bg-gray-800/80 rounded-3xl p-5 border border-gray-700/50">
+                        <View className="flex-row items-center mb-4">
+                            <View className="w-8 h-8 rounded-full items-center justify-center mr-3" style={{ backgroundColor: config.bgColor }}>
+                                <Ionicons name="list" size={16} color={config.color} />
+                            </View>
+                            <Text className="text-white font-bold text-lg">{t('lessons.instructions') || 'Instructions'}</Text>
+                        </View>
+
+                        <Markdown
+                            style={{
+                                body: { color: '#e5e7eb', fontSize: 16, lineHeight: 26 },
+                                heading1: { color: 'white', fontSize: 22, fontWeight: 'bold', marginBottom: 12, marginTop: 16 },
+                                heading2: { color: 'white', fontSize: 18, fontWeight: 'bold', marginBottom: 10, marginTop: 14 },
+                                heading3: { color: '#d1d5db', fontSize: 16, fontWeight: 'bold', marginBottom: 8, marginTop: 12 },
+                                paragraph: { marginBottom: 12 },
+                                listItem: { color: '#e5e7eb', marginBottom: 6 },
+                                listUnorderedItemIcon: { color: config.color, fontSize: 8, lineHeight: 26 },
+                                listOrderedItemIcon: { color: config.color, fontWeight: 'bold' },
+                                strong: { color: 'white', fontWeight: 'bold' },
+                                em: { color: '#d1d5db', fontStyle: 'italic' },
+                                blockquote: {
+                                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                                    borderLeftColor: '#818cf8',
+                                    borderLeftWidth: 4,
+                                    paddingHorizontal: 12,
+                                    paddingVertical: 8,
+                                    marginVertical: 8,
+                                    borderRadius: 8,
+                                },
+                                code_inline: {
+                                    backgroundColor: 'rgba(255,255,255,0.1)',
+                                    color: config.color,
+                                    paddingHorizontal: 6,
+                                    paddingVertical: 2,
+                                    borderRadius: 4,
+                                },
+                                fence: {
+                                    backgroundColor: 'rgba(0,0,0,0.3)',
+                                    borderRadius: 12,
+                                    padding: 12,
+                                    marginVertical: 8,
+                                },
+                                code_block: { color: '#e5e7eb', fontSize: 14 },
+                            }}
+                        >
+                            {lessonContent}
+                        </Markdown>
+                    </View>
+                </Animated.View>
+            </ScrollView>
+
+            {/* Sticky Complete Button */}
+            {!isCompleted && dogId && (
+                <View
+                    className="absolute bottom-0 left-0 right-0 px-4"
+                    style={{ paddingBottom: insets.bottom + 16 }}
+                >
+                    <LinearGradient
+                        colors={['transparent', 'rgba(17, 24, 39, 0.95)', '#111827']}
+                        className="absolute inset-0 -top-8"
+                    />
                     <TouchableOpacity
                         onPress={handleComplete}
                         disabled={completing}
-                        className={`w-full py-4 rounded-2xl items-center mb-10 ${completing ? 'bg-indigo-700' : 'bg-indigo-600'
-                            }`}
+                        className="w-full py-4 rounded-2xl items-center flex-row justify-center"
+                        style={{ backgroundColor: config.color }}
                     >
                         {completing ? (
                             <ActivityIndicator color="white" />
                         ) : (
-                            <Text className="text-white font-bold text-lg">{t('lessons.complete_button')}</Text>
+                            <>
+                                <Ionicons name="checkmark-circle" size={24} color="white" />
+                                <Text className="text-white font-bold text-lg ml-2">{t('lessons.complete_button')}</Text>
+                            </>
                         )}
                     </TouchableOpacity>
-                )}
-
-                {isCompleted && (
-                    <View className="w-full py-4 rounded-2xl items-center mb-10 bg-green-500/20 border border-green-500/30">
-                        <View className="flex-row items-center">
-                            <Ionicons name="checkmark-circle" size={24} color="#4ade80" />
-                            <Text className="text-green-400 font-bold text-lg ml-2">{t('lessons.completed')}</Text>
-                        </View>
-                    </View>
-                )}
-            </ScrollView>
+                </View>
+            )}
 
             {/* Achievement Modal */}
             {unlockedAchievement && (

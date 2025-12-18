@@ -221,8 +221,8 @@ export default function ProfileScreen() {
                             onPress={() => router.push('/settings')}
                             className="flex-row items-center p-4 border-b border-gray-700/30"
                         >
-                            <View className="bg-blue-500/20 p-2.5 rounded-xl mr-4">
-                                <Ionicons name="settings-outline" size={22} color="#60a5fa" />
+                            <View className="bg-gray-700/50 p-2.5 rounded-xl mr-4">
+                                <Ionicons name="settings-outline" size={22} color="#9ca3af" />
                             </View>
                             <Text className="text-white text-base flex-1 font-medium">{t('profile.settings')}</Text>
                             <Ionicons name="chevron-forward" size={20} color="#6b7280" />
@@ -231,8 +231,8 @@ export default function ProfileScreen() {
                         <TouchableOpacity
                             className="flex-row items-center p-4"
                         >
-                            <View className="bg-yellow-500/20 p-2.5 rounded-xl mr-4">
-                                <Ionicons name="star" size={22} color="#fbbf24" />
+                            <View className="bg-gray-700/50 p-2.5 rounded-xl mr-4">
+                                <Ionicons name="star" size={22} color="#9ca3af" />
                             </View>
                             <Text className="text-white text-base flex-1 font-medium">{t('profile.rate_app')}</Text>
                             <Ionicons name="chevron-forward" size={20} color="#6b7280" />
@@ -252,10 +252,10 @@ export default function ProfileScreen() {
                             onPress={handleSignOut}
                             className="flex-row items-center p-4 border-b border-gray-700/30"
                         >
-                            <View className="bg-orange-500/20 p-2.5 rounded-xl mr-4">
-                                <Ionicons name="log-out-outline" size={22} color="#fb923c" />
+                            <View className="bg-red-500/20 p-2.5 rounded-xl mr-4">
+                                <Ionicons name="log-out-outline" size={22} color="#ef4444" />
                             </View>
-                            <Text className="text-orange-400 text-base flex-1 font-medium">{t('settings.logout')}</Text>
+                            <Text className="text-red-400 text-base flex-1 font-medium">{t('settings.logout')}</Text>
                             <Ionicons name="chevron-forward" size={20} color="#6b7280" />
                         </TouchableOpacity>
 

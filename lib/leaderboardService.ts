@@ -7,6 +7,7 @@ export interface LeaderboardEntry {
     rank: number;
     dogName: string;
     displayName: string | null;
+    photoUrl: string | null;
     score: number;
     userId: string;
     dogId: string;
@@ -64,7 +65,8 @@ export async function getLeaderboard(
                 total_distance_meters,
                 best_streak,
                 total_lessons,
-                profiles!inner(display_name, is_public)
+                profiles!inner(display_name, is_public),
+                dogs:dog_id(name, photo_url)
             `)
             .eq('profiles.is_public', true)
             .order(orderColumn, { ascending: false })
@@ -118,24 +120,23 @@ export async function getLeaderboard(
             }
         });
 
-        // Get personal bests to mark new records
+        // Get personal bests to mark new records (show to all users)
         let personalBestsMap = new Map<string, boolean>();
-        if (currentUserId) {
-            const { data: pbData } = await supabase
-                .from('personal_bests')
-                .select('dog_id, category, achieved_at')
-                .eq('category', category);
+        const { data: pbData } = await supabase
+            .from('personal_bests')
+            .select('dog_id, category, achieved_at')
+            .eq('category', category)
+            .in('dog_id', dogIds);
 
-            const oneDayAgo = new Date();
-            oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+        const oneDayAgo = new Date();
+        oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
-            (pbData || []).forEach((pb: any) => {
-                const achievedAt = new Date(pb.achieved_at);
-                if (achievedAt > oneDayAgo) {
-                    personalBestsMap.set(pb.dog_id, true);
-                }
-            });
-        }
+        (pbData || []).forEach((pb: any) => {
+            const achievedAt = new Date(pb.achieved_at);
+            if (achievedAt > oneDayAgo) {
+                personalBestsMap.set(pb.dog_id, true);
+            }
+        });
 
         const rankColumn = `rank_${category}` as keyof typeof historyMap extends never ? string : string;
 
@@ -163,8 +164,9 @@ export async function getLeaderboard(
 
             return {
                 rank: currentRank,
-                dogName: entry.dog_name,
+                dogName: entry.dogs?.name || entry.dog_name,
                 displayName: entry.profiles?.display_name || null,
+                photoUrl: entry.dogs?.photo_url || null,
                 score: entry[orderColumn],
                 userId: entry.user_id,
                 dogId: entry.dog_id,
@@ -351,16 +353,60 @@ export async function getCurrentUserRank(
 }
 
 /**
+ * Ensure a dog has an entry in leaderboard_stats.
+ * Creates one if it doesn't exist.
+ */
+export async function ensureLeaderboardStats(dogId: string, dogName: string, userId: string): Promise<boolean> {
+    try {
+        // Check if stats exist
+        const { data: existing } = await supabase
+            .from('leaderboard_stats')
+            .select('dog_id')
+            .eq('dog_id', dogId)
+            .single();
+
+        if (existing) return true;
+
+        // Create initial stats entry
+        const { error } = await supabase
+            .from('leaderboard_stats')
+            .insert({
+                dog_id: dogId,
+                dog_name: dogName,
+                user_id: userId,
+                total_walks: 0,
+                total_distance_meters: 0,
+                best_streak: 0,
+                total_lessons: 0,
+            });
+
+        if (error) {
+            console.error('[Leaderboard] Error creating stats:', error);
+            return false;
+        }
+
+        console.log('[Leaderboard] Created stats for new dog:', dogName);
+        return true;
+    } catch (error) {
+        console.error('[Leaderboard] Exception creating stats:', error);
+        return false;
+    }
+}
+
+/**
  * Update current user's leaderboard stats.
+ * Falls back to direct update if RPC doesn't exist.
  */
 export async function updateUserStats(dogId: string): Promise<void> {
     try {
+        // Try RPC first
         const { error } = await supabase.rpc('update_leaderboard_stats', {
             p_dog_id: dogId
         });
 
         if (error) {
-            console.error('[Leaderboard] Error updating stats:', error);
+            // If RPC doesn't exist, log warning but don't fail
+            console.log('[Leaderboard] RPC not available, skipping stats update');
         }
     } catch (error) {
         console.error('[Leaderboard] Exception updating stats:', error);

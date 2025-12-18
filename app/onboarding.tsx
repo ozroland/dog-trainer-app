@@ -63,6 +63,8 @@ export default function OnboardingScreen() {
 
     const completeOnboarding = async () => {
         await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+        // Small delay to ensure AsyncStorage is fully written before navigation
+        await new Promise(resolve => setTimeout(resolve, 100));
         router.replace('/auth');
     };
 
