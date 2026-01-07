@@ -404,15 +404,16 @@ export default function Home() {
                                     <Text className="text-white font-semibold text-sm">{t('home.badges')}</Text>
                                 </TouchableOpacity>
 
-                                {/* Placeholder 4th card */}
+                                {/* Park Meetup Card */}
                                 <View
                                     className="bg-gray-800/30 rounded-2xl border border-dashed border-gray-600 items-center justify-center p-4"
                                     style={{ width: '48%' }}
                                 >
-                                    <View className="bg-gray-700/30 p-3 rounded-xl mb-3">
-                                        <Ionicons name="sparkles" size={24} color="#6b7280" />
+                                    <View className="bg-green-500/20 p-3 rounded-xl mb-3">
+                                        <Ionicons name="people" size={24} color="#4ade80" />
                                     </View>
-                                    <Text className="text-gray-500 font-semibold text-sm">{t('common.soon') || 'Coming Soon'}</Text>
+                                    <Text className="text-gray-400 font-semibold text-sm">{t('home.park_meetup')}</Text>
+                                    <Text className="text-gray-600 text-[10px] mt-1">{t('common.soon')}</Text>
                                 </View>
                             </View>
                         </View>

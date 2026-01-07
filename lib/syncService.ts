@@ -1,5 +1,6 @@
 import NetInfo from '@react-native-community/netinfo';
 import { supabase } from './supabase';
+import { Logger } from './logger';
 import {
     LocalWalk,
     getPendingWalks,
@@ -55,7 +56,7 @@ async function syncWalk(walk: LocalWalk): Promise<boolean> {
 
         // Mark as synced
         await updateWalkSyncStatus(walk.localId, 'synced', data.id);
-        console.log(`[SyncService] Walk ${walk.localId} synced successfully as ${data.id}`);
+        Logger.debug('SyncService', `Walk ${walk.localId} synced successfully as ${data.id}`);
         return true;
 
     } catch (error) {
@@ -70,14 +71,14 @@ async function syncWalk(walk: LocalWalk): Promise<boolean> {
  */
 export async function syncPendingWalks(): Promise<{ synced: number; failed: number }> {
     if (isSyncing) {
-        console.log('[SyncService] Sync already in progress, skipping');
+        Logger.debug('SyncService', 'Sync already in progress, skipping');
         return { synced: 0, failed: 0 };
     }
 
     // Check network connectivity
     const netState = await NetInfo.fetch();
     if (!netState.isConnected) {
-        console.log('[SyncService] No network connection, skipping sync');
+        Logger.debug('SyncService', 'No network connection, skipping sync');
         return { synced: 0, failed: 0 };
     }
 
@@ -89,7 +90,7 @@ export async function syncPendingWalks(): Promise<{ synced: number; failed: numb
         const pending = await getPendingWalks();
         const toSync = pending.filter(w => w.syncStatus === 'pending' || w.syncStatus === 'failed');
 
-        console.log(`[SyncService] Syncing ${toSync.length} pending walks...`);
+        Logger.debug('SyncService', `Syncing ${toSync.length} pending walks...`);
 
         for (const walk of toSync) {
             const success = await syncWalk(walk);
@@ -109,7 +110,7 @@ export async function syncPendingWalks(): Promise<{ synced: number; failed: numb
         isSyncing = false;
     }
 
-    console.log(`[SyncService] Sync complete: ${synced} synced, ${failed} failed`);
+    Logger.debug('SyncService', `Sync complete: ${synced} synced, ${failed} failed`);
     return { synced, failed };
 }
 
@@ -154,13 +155,13 @@ export async function completeWalk(walk: LocalWalk): Promise<string | null> {
 
                 // Clear active walk after successful sync
                 await clearActiveWalk();
-                console.log(`[SyncService] Walk synced immediately: ${data.id}`);
+                Logger.debug('SyncService', `Walk synced immediately: ${data.id}`);
                 return data.id;
             }
         }
 
         // If we get here, either offline or sync failed - save to pending queue
-        console.log('[SyncService] Saving walk to pending queue for later sync');
+        Logger.debug('SyncService', 'Saving walk to pending queue for later sync');
         const { addToPendingWalks } = await import('./walkStorage');
         await addToPendingWalks({
             ...walk,
@@ -189,7 +190,7 @@ export async function completeWalk(walk: LocalWalk): Promise<string | null> {
 export function startNetworkListener(): () => void {
     const unsubscribe = NetInfo.addEventListener(state => {
         if (state.isConnected) {
-            console.log('[SyncService] Network connected, triggering sync');
+            Logger.debug('SyncService', 'Network connected, triggering sync');
             syncPendingWalks();
         }
     });

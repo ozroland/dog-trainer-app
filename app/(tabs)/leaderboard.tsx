@@ -17,8 +17,8 @@ import {
 import haptics from '../../lib/haptics';
 import { Skeleton } from '../../components/ui/Skeleton';
 
-const CATEGORIES: LeaderboardCategory[] = ['walks', 'distance', 'streak', 'lessons'];
-type TimeFilter = 'daily' | 'weekly' | 'alltime';
+const CATEGORIES: LeaderboardCategory[] = ['distance', 'streak'];
+
 
 const categoryConfig: Record<LeaderboardCategory, { color: string; bgColor: string; icon: string }> = {
     walks: { color: '#4ade80', bgColor: 'rgba(74, 222, 128, 0.15)', icon: 'footsteps' },
@@ -85,43 +85,59 @@ function DogAvatar({ photoUrl, dogName, size = 56, borderColor }: {
 }
 
 // Simple Sparkline component
+import { Svg, Path, Defs, LinearGradient, Stop } from 'react-native-svg';
+
+// Simple Sparkline component using SVG
 function Sparkline({ data, color, width = 60, height = 24 }: { data: number[]; color: string; width?: number; height?: number }) {
     if (!data || data.length < 2) return null;
 
-    const max = Math.max(...data, 1);
-    const min = Math.min(...data, 0);
+    const max = Math.max(...data);
+    const min = Math.min(...data);
     const range = max - min || 1;
+    const padding = 2;
+    const effectiveHeight = height - padding * 2;
 
+    // Generate path data
     const points = data.map((value, index) => {
         const x = (index / (data.length - 1)) * width;
-        const y = height - ((value - min) / range) * height;
+        const y = height - padding - ((value - min) / range) * effectiveHeight;
         return `${x},${y}`;
-    }).join(' ');
+    });
+
+    const pathData = `M ${points.join(' L ')}`;
+    const areaPathData = `${pathData} L ${width},${height} L 0,${height} Z`;
 
     return (
         <View style={{ width, height }}>
-            <View className="absolute inset-0 opacity-20" style={{ backgroundColor: color, borderRadius: 4 }} />
-            {/* Simple bar representation since SVG isn't available */}
-            <View className="flex-row items-end justify-between h-full px-0.5">
-                {data.map((value, index) => (
-                    <View
-                        key={index}
-                        style={{
-                            width: (width / data.length) - 2,
-                            height: Math.max(4, ((value - min) / range) * height),
-                            backgroundColor: color,
-                            borderRadius: 2,
-                            opacity: 0.8 + (index / data.length) * 0.2,
-                        }}
-                    />
-                ))}
-            </View>
+            <Svg width={width} height={height}>
+                <Defs>
+                    <LinearGradient id={`gradient-${color}`} x1="0" y1="0" x2="0" y2="1">
+                        <Stop offset="0" stopColor={color} stopOpacity="0.5" />
+                        <Stop offset="1" stopColor={color} stopOpacity="0" />
+                    </LinearGradient>
+                </Defs>
+                {/* Area fill */}
+                <Path
+                    d={areaPathData}
+                    fill={`url(#gradient-${color})`}
+                />
+                {/* Line stroke */}
+                <Path
+                    d={pathData}
+                    stroke={color}
+                    strokeWidth="2"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                />
+            </Svg>
         </View>
     );
 }
 
 // Celebration animation component
 function CelebrationBadge({ visible }: { visible: boolean }) {
+    const { t } = useTranslation();
     const scaleAnim = useRef(new Animated.Value(0)).current;
     const rotateAnim = useRef(new Animated.Value(0)).current;
 
@@ -178,7 +194,7 @@ function CelebrationBadge({ visible }: { visible: boolean }) {
         >
             <View className="bg-amber-500 px-2 py-0.5 rounded-full flex-row items-center">
                 <Text className="text-xs">🔥</Text>
-                <Text className="text-white text-xs font-bold ml-0.5">NEW!</Text>
+                <Text className="text-white text-xs font-bold ml-0.5">{t('leaderboard.new_record') || 'NEW!'}</Text>
             </View>
         </Animated.View>
     );
@@ -188,8 +204,7 @@ export default function LeaderboardScreen() {
     const { t } = useTranslation();
     const insets = useSafeAreaInsets();
 
-    const [selectedCategory, setSelectedCategory] = useState<LeaderboardCategory>('walks');
-    const [timeFilter, setTimeFilter] = useState<TimeFilter>('alltime');
+    const [selectedCategory, setSelectedCategory] = useState<LeaderboardCategory>('distance');
     const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -209,7 +224,7 @@ export default function LeaderboardScreen() {
     useEffect(() => {
         // Only load if we've attempted to get user (currentUserId can be null for logged out users)
         loadLeaderboard();
-    }, [selectedCategory, timeFilter, currentUserId]);
+    }, [selectedCategory, currentUserId]);
 
     const loadInitialData = async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -266,7 +281,7 @@ export default function LeaderboardScreen() {
         setRefreshing(true);
         await loadLeaderboard();
         setRefreshing(false);
-    }, [selectedCategory, timeFilter]);
+    }, [selectedCategory]);
 
     const handleFollow = async (dogId: string, isFollowed: boolean) => {
         haptics.medium();
@@ -440,12 +455,7 @@ export default function LeaderboardScreen() {
                                 <Text className="text-white font-bold text-sm text-center" numberOfLines={2}>
                                     {formatScore(entry.score, selectedCategory)}
                                 </Text>
-                                {/* Sparkline */}
-                                {entry.weeklyActivity && entry.weeklyActivity.length >= 2 && (
-                                    <View className="mt-1">
-                                        <Sparkline data={entry.weeklyActivity} color={color} width={50} height={16} />
-                                    </View>
-                                )}
+
                             </View>
                         </View>
                     );
@@ -464,7 +474,7 @@ export default function LeaderboardScreen() {
             <View className="mx-4 mb-4">
                 <View className="flex-row items-center mb-2">
                     <Ionicons name="pin" size={14} color="#818cf8" />
-                    <Text className="text-indigo-400 font-semibold text-sm ml-1">Your Position</Text>
+                    <Text className="text-indigo-400 font-semibold text-sm ml-1">{t('leaderboard.your_position')}</Text>
                     {renderTrendIndicator(entryWithGap)}
                 </View>
                 <View className="bg-indigo-500/15 border border-indigo-500/30 rounded-2xl p-4 relative">
@@ -497,13 +507,7 @@ export default function LeaderboardScreen() {
                             </View>
                         )}
                     </View>
-                    {/* Sparkline for user */}
-                    {entryWithGap.weeklyActivity && entryWithGap.weeklyActivity.length >= 2 && (
-                        <View className="mt-3 pt-3 border-t border-indigo-500/20">
-                            <Text className="text-indigo-400/70 text-xs mb-1">Last 4 weeks</Text>
-                            <Sparkline data={entryWithGap.weeklyActivity} color="#818cf8" width={280} height={32} />
-                        </View>
-                    )}
+
                 </View>
             </View>
         );
@@ -540,11 +544,6 @@ export default function LeaderboardScreen() {
                             <Text className="text-white text-sm font-medium">
                                 {formatScore(entry.score, selectedCategory)}
                             </Text>
-                            {entry.weeklyActivity && entry.weeklyActivity.length >= 2 && (
-                                <View className="mt-2">
-                                    <Sparkline data={entry.weeklyActivity} color="#f472b6" width={120} height={20} />
-                                </View>
-                            )}
                             {/* Unfollow button */}
                             <TouchableOpacity
                                 onPress={() => handleFollow(entry.dogId, true)}
@@ -598,9 +597,9 @@ export default function LeaderboardScreen() {
                                     <Text className="text-white text-sm font-medium">
                                         {formatScore(rival.score, selectedCategory)}
                                     </Text>
-                                    <View className={`flex-row items-center px-2 py-0.5 rounded-full ${isAhead ? 'bg-red-500/20' : 'bg-green-500/20'}`}>
-                                        <Ionicons name={isAhead ? 'arrow-up' : 'arrow-down'} size={12} color={isAhead ? '#ef4444' : '#22c55e'} />
-                                        <Text className={`text-xs font-bold ml-0.5 ${isAhead ? 'text-red-400' : 'text-green-400'}`}>
+                                    <View className={`flex-row items-center px-2 py-0.5 rounded-full ${isAhead ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+                                        <Ionicons name={isAhead ? 'arrow-up' : 'arrow-down'} size={12} color={isAhead ? '#22c55e' : '#ef4444'} />
+                                        <Text className={`text-xs font-bold ml-0.5 ${isAhead ? 'text-green-400' : 'text-red-400'}`}>
                                             {Math.abs(rival.rank - (currentUserEntry?.rank || 0))}
                                         </Text>
                                     </View>
@@ -660,9 +659,7 @@ export default function LeaderboardScreen() {
                         <Text className={`font-bold text-base ${entry.isCurrentUser ? 'text-indigo-300' : 'text-white'}`}>
                             {entry.dogName}
                         </Text>
-                        {entry.isFollowed && !entry.isCurrentUser && (
-                            <Ionicons name="heart" size={12} color="#f472b6" style={{ marginLeft: 4 }} />
-                        )}
+
                     </View>
                     {entry.displayName && (
                         <Text className="text-gray-400 text-sm">
@@ -677,9 +674,7 @@ export default function LeaderboardScreen() {
 
                 {/* Sparkline & Score */}
                 <View className="items-end">
-                    {entry.weeklyActivity && entry.weeklyActivity.length >= 2 && (
-                        <Sparkline data={entry.weeklyActivity} color={config.color} width={50} height={16} />
-                    )}
+
                     <Text className={`font-bold text-base mt-1 ${entry.isCurrentUser ? 'text-indigo-300' : 'text-white'}`}>
                         {formatScore(entry.score, selectedCategory)}
                     </Text>
@@ -773,23 +768,7 @@ export default function LeaderboardScreen() {
                     </Text>
                 </View>
 
-                {/* Time Filter */}
-                <View className="flex-row mx-4 mb-4 bg-gray-800/30 rounded-xl p-1">
-                    {(['daily', 'weekly', 'alltime'] as TimeFilter[]).map((filter) => (
-                        <TouchableOpacity
-                            key={filter}
-                            onPress={() => {
-                                haptics.selection();
-                                setTimeFilter(filter);
-                            }}
-                            className={`flex-1 py-2.5 rounded-lg items-center ${timeFilter === filter ? 'bg-indigo-500' : ''}`}
-                        >
-                            <Text className={`font-semibold text-sm ${timeFilter === filter ? 'text-white' : 'text-gray-400'}`}>
-                                {filter === 'daily' ? t('leaderboard.today') : filter === 'weekly' ? t('leaderboard.this_week') : t('leaderboard.all_time')}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
+
 
                 {/* Opt-in Prompt */}
                 {showOptInPrompt && !isPublic && (
@@ -902,7 +881,7 @@ export default function LeaderboardScreen() {
                             <View className="px-4">
                                 <View className="flex-row items-center mb-4">
                                     <View className="w-1 h-5 rounded-full mr-3" style={{ backgroundColor: config.color }} />
-                                    <Text className="text-white font-bold text-lg">Rankings</Text>
+                                    <Text className="text-white font-bold text-lg">{t('leaderboard.rankings')}</Text>
                                 </View>
                                 {restEntries.map(renderEntry)}
                             </View>

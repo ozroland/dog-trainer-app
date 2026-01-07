@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { Logger } from './logger';
 
 export type LeaderboardCategory = 'walks' | 'distance' | 'streak' | 'lessons';
 export type LeaderboardTimeframe = 'daily' | 'weekly' | 'alltime';
@@ -77,31 +78,52 @@ export async function getLeaderboard(
             return [];
         }
 
-        // Get user's followed dogs if logged in
-        let followedDogIds: string[] = [];
-        if (currentUserId) {
-            const { data: follows } = await supabase
-                .from('dog_follows')
-                .select('followed_dog_id')
-                .eq('follower_user_id', currentUserId);
-            followedDogIds = (follows || []).map(f => f.followed_dog_id);
-        }
+        return processLeaderboardData(data || [], category, currentUserId, orderColumn);
 
-        // Get trend data (compare to 7 days ago)
-        const dogIds = (data || []).map((d: any) => d.dog_id);
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        const weekAgoStr = weekAgo.toISOString().split('T')[0];
+    } catch (error) {
+        console.error('[Leaderboard] Exception:', error);
+        return [];
+    }
+}
 
+// Helper to process raw supabase data into LeaderboardEntry
+async function processLeaderboardData(
+    data: any[],
+    category: LeaderboardCategory,
+    currentUserId: string | undefined,
+    orderColumn: string
+): Promise<LeaderboardEntry[]> {
+    // Get user's followed dogs if logged in
+    let followedDogIds: string[] = [];
+    if (currentUserId) {
+        const { data: follows } = await supabase
+            .from('dog_follows')
+            .select('followed_dog_id')
+            .eq('follower_user_id', currentUserId);
+        followedDogIds = (follows || []).map(f => f.followed_dog_id);
+    }
+
+    // Get trend data (compare to 7 days ago)
+    const dogIds = (data || []).map((d: any) => d.dog_id);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const weekAgoStr = weekAgo.toISOString().split('T')[0];
+
+    // Only fetch history if we have dogs
+    let historyMap = new Map();
+    if (dogIds.length > 0) {
         const { data: historyData } = await supabase
             .from('leaderboard_history')
             .select('dog_id, rank_walks, rank_distance, rank_streak, rank_lessons')
             .in('dog_id', dogIds)
             .eq('snapshot_date', weekAgoStr);
 
-        const historyMap = new Map((historyData || []).map(h => [h.dog_id, h]));
+        historyMap = new Map((historyData || []).map(h => [h.dog_id, h]));
+    }
 
-        // Get weekly activity for sparklines
+    // Get weekly activity for sparklines
+    const weeklyMap = new Map<string, number[]>();
+    if (dogIds.length > 0) {
         const { data: weeklyData } = await supabase
             .from('weekly_activity')
             .select('dog_id, week_start, walks_count, total_distance, lessons_completed')
@@ -109,7 +131,6 @@ export async function getLeaderboard(
             .order('week_start', { ascending: false })
             .limit(dogIds.length * 4);
 
-        const weeklyMap = new Map<string, number[]>();
         (weeklyData || []).forEach((w: any) => {
             if (!weeklyMap.has(w.dog_id)) weeklyMap.set(w.dog_id, []);
             const arr = weeklyMap.get(w.dog_id)!;
@@ -119,9 +140,11 @@ export async function getLeaderboard(
                 arr.push(value);
             }
         });
+    }
 
-        // Get personal bests to mark new records (show to all users)
-        let personalBestsMap = new Map<string, boolean>();
+    // Get personal bests
+    let personalBestsMap = new Map<string, boolean>();
+    if (dogIds.length > 0) {
         const { data: pbData } = await supabase
             .from('personal_bests')
             .select('dog_id, category, achieved_at')
@@ -137,52 +160,47 @@ export async function getLeaderboard(
                 personalBestsMap.set(pb.dog_id, true);
             }
         });
+    }
 
-        const rankColumn = `rank_${category}` as keyof typeof historyMap extends never ? string : string;
+    // Transform and rank
+    return (data || []).map((entry: any, index: number) => {
+        const currentRank = index + 1;
+        const history = historyMap.get(entry.dog_id);
+        let trend: 'up' | 'down' | 'same' | null = null;
+        let trendValue = 0;
 
-        // Transform and rank
-        return (data || []).map((entry: any, index: number) => {
-            const currentRank = index + 1;
-            const history = historyMap.get(entry.dog_id);
-            let trend: 'up' | 'down' | 'same' | null = null;
-            let trendValue = 0;
-
-            if (history) {
-                const oldRank = (history as any)[`rank_${category}`];
-                if (oldRank) {
-                    if (oldRank > currentRank) {
-                        trend = 'up';
-                        trendValue = oldRank - currentRank;
-                    } else if (oldRank < currentRank) {
-                        trend = 'down';
-                        trendValue = currentRank - oldRank;
-                    } else {
-                        trend = 'same';
-                    }
+        if (history) {
+            const oldRank = (history as any)[`rank_${category === 'lessons' ? 'lessons' : category}`];
+            // If oldRank exists
+            if (oldRank) {
+                if (oldRank > currentRank) {
+                    trend = 'up';
+                    trendValue = oldRank - currentRank;
+                } else if (oldRank < currentRank) {
+                    trend = 'down';
+                    trendValue = currentRank - oldRank;
+                } else {
+                    trend = 'same';
                 }
             }
+        }
 
-            return {
-                rank: currentRank,
-                dogName: entry.dogs?.name || entry.dog_name,
-                displayName: entry.profiles?.display_name || null,
-                photoUrl: entry.dogs?.photo_url || null,
-                score: entry[orderColumn],
-                userId: entry.user_id,
-                dogId: entry.dog_id,
-                isCurrentUser: currentUserId === entry.user_id,
-                isFollowed: followedDogIds.includes(entry.dog_id),
-                trend,
-                trendValue,
-                weeklyActivity: weeklyMap.get(entry.dog_id)?.reverse() || [],
-                isNewRecord: personalBestsMap.get(entry.dog_id) || false,
-            };
-        });
-
-    } catch (error) {
-        console.error('[Leaderboard] Exception:', error);
-        return [];
-    }
+        return {
+            rank: currentRank,
+            dogName: entry.dogs?.name || entry.dog_name,
+            displayName: entry.profiles?.display_name || null,
+            photoUrl: entry.dogs?.photo_url || null,
+            score: entry[orderColumn],
+            userId: entry.user_id,
+            dogId: entry.dog_id,
+            isCurrentUser: currentUserId === entry.user_id,
+            isFollowed: followedDogIds.includes(entry.dog_id),
+            trend,
+            trendValue,
+            weeklyActivity: weeklyMap.get(entry.dog_id)?.reverse() || [],
+            isNewRecord: personalBestsMap.get(entry.dog_id) || false,
+        };
+    });
 }
 
 /**
@@ -385,7 +403,7 @@ export async function ensureLeaderboardStats(dogId: string, dogName: string, use
             return false;
         }
 
-        console.log('[Leaderboard] Created stats for new dog:', dogName);
+        Logger.debug('Leaderboard', 'Created stats for new dog:', dogName);
         return true;
     } catch (error) {
         console.error('[Leaderboard] Exception creating stats:', error);
@@ -406,7 +424,7 @@ export async function updateUserStats(dogId: string): Promise<void> {
 
         if (error) {
             // If RPC doesn't exist, log warning but don't fail
-            console.log('[Leaderboard] RPC not available, skipping stats update');
+            Logger.debug('Leaderboard', 'RPC not available, skipping stats update');
         }
     } catch (error) {
         console.error('[Leaderboard] Exception updating stats:', error);

@@ -328,6 +328,8 @@ export default function AddEventScreen() {
                                     }
                                     if (selectedDate) setEventDate(selectedDate);
                                 }}
+                                minimumDate={new Date()}
+                                maximumDate={new Date(2100, 0, 1)}
                                 themeVariant="dark"
                                 style={Platform.OS === 'ios' ? { height: 200 } : undefined}
                             />

@@ -1,5 +1,6 @@
 import NetInfo from '@react-native-community/netinfo';
 import { Alert } from 'react-native';
+import { Logger } from './logger';
 
 /**
  * Check if the device is currently online.
@@ -37,7 +38,7 @@ export async function withNetworkCheck<T>(
     try {
         return await fn();
     } catch (error) {
-        console.error('[Network] Request failed:', error);
+        Logger.error('Network', 'Request failed:', error);
         throw error;
     }
 }
@@ -60,7 +61,7 @@ export async function withRetry<T>(
 
             if (attempt < maxRetries - 1) {
                 const delay = baseDelayMs * Math.pow(2, attempt);
-                console.log(`[Network] Retry ${attempt + 1}/${maxRetries} after ${delay}ms`);
+                Logger.debug('Network', `Retry ${attempt + 1}/${maxRetries} after ${delay}ms`);
                 await new Promise(resolve => setTimeout(resolve, delay));
             }
         }
@@ -85,13 +86,13 @@ export async function safeQuery<T>(
         const { data, error } = await queryFn();
 
         if (error) {
-            console.error('[SafeQuery] Error:', error);
+            Logger.error('SafeQuery', 'Error:', error);
             return { data: null, error: error.message || 'Database error' };
         }
 
         return { data, error: null };
     } catch (error) {
-        console.error('[SafeQuery] Exception:', error);
+        Logger.error('SafeQuery', 'Exception:', error);
         return {
             data: null,
             error: error instanceof Error ? error.message : 'Unknown error'

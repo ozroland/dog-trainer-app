@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, Alert, Modal, Dimensions } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Alert, Modal, Dimensions, RefreshControl } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { useState, useMemo, useCallback } from "react";
@@ -28,6 +28,7 @@ export default function CalendarScreen() {
     // Modal states
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<any>(null);
+    const [refreshing, setRefreshing] = useState(false);
 
     // Tab state for switching between views
     const [activeTab, setActiveTab] = useState<'calendar' | 'upcoming'>('calendar');
@@ -37,6 +38,12 @@ export default function CalendarScreen() {
             fetchData();
         }, [id])
     );
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchData();
+        setRefreshing(false);
+    }, [id]);
 
     async function fetchData() {
         try {
@@ -65,6 +72,8 @@ export default function CalendarScreen() {
                 .order("date", { ascending: true });
 
             if (eventError) throw eventError;
+            if (eventError) throw eventError;
+            console.log("Fetched events:", eventData);
             setCalendarEvents(eventData || []);
 
         } catch (error: any) {
@@ -306,7 +315,13 @@ export default function CalendarScreen() {
                 </View>
             </View>
 
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+            <ScrollView
+                className="flex-1"
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />
+                }
+            >
                 {activeTab === 'calendar' ? (
                     <View>
                         {/* Modern Calendar */}

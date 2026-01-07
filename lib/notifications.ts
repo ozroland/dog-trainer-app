@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform, Alert } from 'react-native';
+import { Logger } from './logger';
 
 // Configure how notifications behave when the app is in foreground
 Notifications.setNotificationHandler({
@@ -62,7 +63,7 @@ export async function scheduleReminder(
     date?: Date
 ) {
     try {
-        console.log(`Scheduling reminder: ${title} at ${hour}:${minute}, recurrence: ${recurrence}`);
+        Logger.debug('Notifications', `Scheduling reminder: ${title} at ${hour}:${minute}, recurrence: ${recurrence}`);
 
         let trigger: CalendarTrigger | Date;
 
@@ -117,21 +118,21 @@ export async function scheduleReminder(
             // @ts-expect-error - Expo types don't fully match runtime API for calendar triggers
             trigger,
         });
-        console.log(`Reminder scheduled with ID: ${identifier}`);
+        Logger.debug('Notifications', `Reminder scheduled with ID: ${identifier}`);
         return identifier;
     } catch (error) {
-        console.error("Error scheduling notification:", error);
+        Logger.error('Notifications', "Error scheduling notification:", error);
         throw error;
     }
 }
 
 export async function cancelReminder(identifier: string) {
-    console.log(`Cancelling reminder: ${identifier}`);
+    Logger.debug('Notifications', `Cancelling reminder: ${identifier}`);
     await Notifications.cancelScheduledNotificationAsync(identifier);
 }
 
 export async function getAllReminders() {
     const reminders = await Notifications.getAllScheduledNotificationsAsync();
-    console.log(`Fetched ${reminders.length} active reminders`);
+    Logger.debug('Notifications', `Fetched ${reminders.length} active reminders`);
     return reminders;
 }
