@@ -13,11 +13,9 @@ DogTrainerApp is designed to help dog owners structure their training, track dai
 - ** Gamification**: 
     - **Leaderboards**: Compete globally or with friends based on walks, distance, and training streaks.
     - **Achievements**: Unlock badges for milestones like "Early Bird" walks or "Marathoner" distances.
-- ** Pet Gallery**: Organized photo gallery grouped by month, with cloud backup.
 - ** AI-Powered**: Integrated AI assistant for personalized training advice and smart greetings.
 - ** Offline-First Architecture**: Walks are saved locally and synced automatically when connection is restored.
 - ** Localization**: Full support for English and Hungarian (Magyar) languages.
-- ** Premium System**: Built-in architecture for premium feature access (currently V1 implementation).
 
 ## Tech Stack
 
