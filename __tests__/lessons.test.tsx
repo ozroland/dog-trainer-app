@@ -69,14 +69,9 @@ describe('Lessons Screen', () => {
             expect(getByText('Sit')).toBeTruthy();
         });
 
-        // Tap 'Intermediate' filter (assuming you have a filter button with text 'Intermediate')
-        // Note: In your code, you map over levels.
-        // You might need to find the TouchableOpacity with text 'Intermediate'
-        // For simplicity in this first pass, we just check rendering.
-        // If we want to test interaction:
-        // const intermediateBtn = getByText('Intermediate');
-        // fireEvent.press(intermediateBtn);
-        // expect(queryByText('Sit')).toBeNull(); // Should be hidden
+        // Tap 'Intermediate' filter
+        // TODO: Implement interaction test when filter UI is finalized
+
         // expect(getByText('Stay')).toBeTruthy();
     });
 });

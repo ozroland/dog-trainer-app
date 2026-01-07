@@ -145,59 +145,43 @@ export default function GalleryScreen() {
     }, [pendingUploadAction, showUploadOptions]);
 
     function handleUploadPhoto(useCamera: boolean) {
-        console.log('[Gallery] handleUploadPhoto called, useCamera:', useCamera);
         setShowUploadOptions(false);
         setPendingUploadAction(useCamera);
     }
 
     async function executeUploadPhoto(useCamera: boolean) {
-        console.log('[Gallery] executeUploadPhoto called, useCamera:', useCamera);
-
         try {
             let result: ImagePicker.ImagePickerResult;
             if (useCamera) {
-                console.log('[Gallery] Requesting camera permission...');
                 const permission = await ImagePicker.requestCameraPermissionsAsync();
-                console.log('[Gallery] Camera permission result:', permission);
                 if (!permission.granted) {
                     Alert.alert(t('common.error'), t('gallery.camera_permission'));
                     return;
                 }
-                console.log('[Gallery] Launching camera...');
                 result = await ImagePicker.launchCameraAsync({
                     mediaTypes: ['images'],
                     quality: 0.8,
                 });
-                console.log('[Gallery] Camera result:', JSON.stringify(result, null, 2));
             } else {
-                console.log('[Gallery] Requesting media library permission...');
                 const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-                console.log('[Gallery] Library permission result:', permission);
                 if (!permission.granted) {
                     Alert.alert(t('common.error'), t('gallery.library_permission') || 'Library permission is required.');
                     return;
                 }
-                console.log('[Gallery] Launching library...');
                 result = await ImagePicker.launchImageLibraryAsync({
                     mediaTypes: ['images'],
                     quality: 0.8,
                 });
-                console.log('[Gallery] Library result:', JSON.stringify(result, null, 2));
             }
 
-            console.log('[Gallery] Result canceled?', result.canceled);
             if (!result.canceled && id) {
                 setUploading(true);
                 haptics.light();
                 const photo = result.assets[0];
-                console.log('[Gallery] Photo URI:', photo.uri);
-                console.log('[Gallery] Photo mimeType:', photo.mimeType);
 
                 const fileExt = photo.uri.split('.').pop() || 'jpg';
                 const fileName = `gallery/${id}_${Date.now()}.${fileExt}`;
-                console.log('[Gallery] Uploading to fileName:', fileName);
 
-                // Use the proper upload helper
                 const { url, error: uploadError } = await uploadImageToSupabase(
                     supabase,
                     'dog_photos',
@@ -205,14 +189,11 @@ export default function GalleryScreen() {
                     fileName,
                     photo.mimeType
                 );
-                console.log('[Gallery] Upload result - url:', url, 'error:', uploadError);
 
                 if (uploadError || !url) {
                     throw new Error(uploadError || 'Upload failed');
                 }
 
-                console.log('[Gallery] Inserting into photos table...');
-                // Save to photos table
                 const { error: insertError } = await supabase
                     .from('photos')
                     .insert({
@@ -221,11 +202,8 @@ export default function GalleryScreen() {
                     });
 
                 if (insertError) {
-                    console.log('[Gallery] Insert error:', insertError);
                     throw insertError;
                 }
-
-                console.log('[Gallery] Success!');
                 haptics.success();
 
                 // Check for achievements
@@ -238,7 +216,6 @@ export default function GalleryScreen() {
                 fetchData();
             }
         } catch (error: unknown) {
-            console.log('[Gallery] ERROR:', error);
             haptics.error();
             const message = error instanceof Error ? error.message : 'Upload failed';
             Alert.alert(t('common.error'), message);
@@ -287,8 +264,7 @@ export default function GalleryScreen() {
                 message: t('gallery.check_out', { name: dog?.name || '' }),
                 url: currentPhoto.url,
             });
-        } catch (error) {
-            console.log('Share cancelled');
+        } catch {
         }
     }
 

@@ -18,7 +18,6 @@ export async function calculateStreak(dogId: string): Promise<number> {
         if (error || !sessions || sessions.length === 0) return 0;
 
         // Deduplicate sessions by date (YYYY-MM-DD format)
-        // This fixes the bug where multiple sessions on the same day broke the streak
         const uniqueDateStrings = [...new Set(
             sessions.map(s => {
                 const d = new Date(s.trained_at);

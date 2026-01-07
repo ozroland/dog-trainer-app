@@ -2,6 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import * as Localization from 'expo-localization';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Logger } from './logger';
 import en from '../locales/en.json';
 import hu from '../locales/hu.json';
 
@@ -20,7 +21,7 @@ const LANGUAGE_DETECTOR = {
                 return callback(storedLanguage);
             }
         } catch (error) {
-            console.log('Error reading language from storage', error);
+            Logger.error('i18n', 'Error reading language from storage', error);
         }
 
         // Fallback to device language
@@ -36,7 +37,7 @@ const LANGUAGE_DETECTOR = {
         try {
             await AsyncStorage.setItem('user-language', language);
         } catch (error) {
-            console.log('Error saving language to storage', error);
+            Logger.error('i18n', 'Error saving language to storage', error);
         }
     },
 };

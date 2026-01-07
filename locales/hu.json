@@ -172,7 +172,8 @@
         "coming_soon": "Hamarosan",
         "no_dogs": "Nincs még kutya",
         "add_dog_message": "Add hozzá kedvencedet a személyre szabott edzés megkezdéséhez.",
-        "add_dog_button": "Kutya hozzáadása"
+        "add_dog_button": "Kutya hozzáadása",
+        "park_meetup": "Park Találkozó"
     },
     "greeting": {
         "on_fire": "{{name}} formában van! 🔥",
@@ -256,7 +257,10 @@
         "unfollow": "Kikövetés",
         "day_streak": "{{count}} nap ",
         "walk": "séta",
-        "lesson": "Lecke"
+        "lesson": "Lecke",
+        "new_record": "ÚJ!",
+        "rankings": "Rangsor",
+        "your_position": "Helyezésed"
     },
     "walk": {
         "poop": "Kaki",
@@ -325,10 +329,16 @@
     },
     "achievements": {
         "title": "Jelvények",
-        "badges_unlocked": "Jelvények feloldva",
+        "badges_unlocked": "Jelvény feloldva",
         "hall_of_fame": "Dicsőségcsarnok",
-        "unlocked": "Jelvény feloldva",
-        "awesome": "Szuper!"
+        "unlocked": "Feloldva",
+        "locked": "Zárolva",
+        "awesome": "Szuper!",
+        "latest": "Legutóbbi",
+        "all_badges": "Összes jelvény",
+        "no_achievements": "Még nincsenek jelvények",
+        "no_achievements_desc": "Kezdj el edzeni, hogy jelvényeket szerezz!",
+        "keep_training": "Folytasd az edzést a feloldáshoz!"
     },
     "stats": {
         "title": "{{name}} statisztikái",
