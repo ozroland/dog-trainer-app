@@ -21,6 +21,7 @@ import {
     clearActiveWalk
 } from "../../lib/walkStorage";
 import { completeWalk } from "../../lib/syncService";
+import { Logger } from "../../lib/logger";
 
 const EVENT_TYPES = [
     { type: 'poop' as const, icon: '💩', label: 'walk.poop', color: 'bg-amber-700' },
@@ -89,7 +90,7 @@ export default function ActiveWalkScreen() {
                 durationSeconds: duration,
                 distanceMeters: distance,
             });
-            console.log('[ActiveWalk] Auto-saved walk state');
+            Logger.debug('ActiveWalk', 'Auto-saved walk state');
         }, AUTO_SAVE_INTERVAL_MS);
 
         return () => clearInterval(interval);
@@ -117,7 +118,7 @@ export default function ActiveWalkScreen() {
                     setDuration(savedWalk.durationSeconds);
                     setDistance(savedWalk.distanceMeters);
                     setIsRecoveredWalk(true);
-                    console.log('[ActiveWalk] Recovered walk from crash');
+                    Logger.debug('ActiveWalk', 'Recovered walk from crash');
                     return;
                 }
             }
@@ -214,10 +215,10 @@ export default function ActiveWalkScreen() {
 
             setLocalWalk(walk);
             await saveActiveWalk(walk);
-            console.log('[ActiveWalk] Started new walk:', walk.localId);
+            Logger.debug('ActiveWalk', 'Started new walk:', walk.localId);
 
         } catch (error) {
-            console.error('Error starting walk:', error);
+            Logger.error('ActiveWalk', 'Error starting walk:', error);
             Alert.alert(t('common.error'), t('walk.start_error'));
             router.back();
         }
@@ -286,7 +287,7 @@ export default function ActiveWalkScreen() {
                             }
 
                         } catch (error) {
-                            console.error('Error ending walk:', error);
+                            Logger.error('ActiveWalk', 'Error ending walk:', error);
                             Alert.alert(t('common.error'), t('walk.save_error'));
                         }
                     }

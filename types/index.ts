@@ -74,7 +74,7 @@ export interface Achievement {
     description: string;
     icon: string;
     sticker_url?: string;
-    condition_type: 'lesson_count' | 'streak_days' | 'specific_lesson';
+    condition_type: 'lesson_count' | 'streak_days' | 'specific_lesson' | 'walk_count' | 'total_distance' | 'difficulty_complete' | 'health_count' | 'photo_count' | 'early_training' | 'late_training' | 'all_lessons_complete';
     condition_value: number;
     title_hu?: string;
     description_hu?: string;

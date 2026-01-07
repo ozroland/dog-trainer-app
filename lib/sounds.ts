@@ -1,4 +1,5 @@
 import { Audio } from 'expo-av';
+import { Logger } from './logger';
 
 // Preloaded sounds cache
 let achievementSound: Audio.Sound | null = null;
@@ -18,11 +19,10 @@ export async function preloadSounds() {
         });
 
         // Preload achievement sound (we'll create a placeholder)
-        // achievementSound = (await Audio.Sound.createAsync(
         //     require('../assets/sounds/achievement.mp3')
         // )).sound;
 
-        console.log('[Sounds] Sounds preloaded');
+        Logger.debug('Sounds', 'Sounds preloaded');
     } catch (error) {
         console.error('[Sounds] Failed to preload sounds:', error);
     }
@@ -36,8 +36,7 @@ export async function preloadSounds() {
 export async function playAchievementSound() {
     // Intentionally silent for now - the clicker sound is distracting
     // The confetti + haptics provide enough feedback
-    // TODO: Add proper achievement chime sound
-    console.log('[Sounds] Achievement unlocked (sound placeholder)');
+    Logger.debug('Sounds', 'Achievement unlocked (silent)');
 }
 
 /**
@@ -56,7 +55,7 @@ export async function playClickerSound() {
             }
         });
     } catch (error) {
-        console.error('[Sounds] Failed to play clicker sound:', error);
+        Logger.error('Sounds', 'Failed to play clicker sound:', error);
     }
 }
 
@@ -80,7 +79,7 @@ export async function startWhistle(): Promise<Audio.Sound | null> {
         await sound.playAsync();
         return sound;
     } catch (error) {
-        console.error('[Sounds] Failed to start whistle:', error);
+        Logger.error('Sounds', 'Failed to start whistle:', error);
         return null;
     }
 }
@@ -93,7 +92,7 @@ export async function stopWhistle() {
             activeWhistle = null;
         }
     } catch (error) {
-        console.error('[Sounds] Failed to stop whistle:', error);
+        Logger.error('Sounds', 'Failed to stop whistle:', error);
     }
 }
 

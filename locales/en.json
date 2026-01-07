@@ -172,7 +172,8 @@
         "coming_soon": "Coming Soon",
         "no_dogs": "No Dogs Yet",
         "add_dog_message": "Add your furry friend to start their personalized training journey.",
-        "add_dog_button": "Add Your Dog"
+        "add_dog_button": "Add Your Dog",
+        "park_meetup": "Park Meetup"
     },
     "greeting": {
         "on_fire": "{{name}} is on fire! 🔥",
@@ -256,7 +257,10 @@
         "unfollow": "Unfollow",
         "day_streak": "{{count}}-day streak",
         "walk": "walk",
-        "lesson": "lesson"
+        "lesson": "lesson",
+        "new_record": "NEW!",
+        "rankings": "Rankings",
+        "your_position": "Your Position"
     },
     "walk": {
         "poop": "Poop",
@@ -327,8 +331,14 @@
         "title": "Badges",
         "badges_unlocked": "Badges Unlocked",
         "hall_of_fame": "Hall of Fame",
-        "unlocked": "Achievement Unlocked",
-        "awesome": "Awesome!"
+        "unlocked": "Unlocked",
+        "locked": "Locked",
+        "awesome": "Awesome!",
+        "latest": "Latest",
+        "all_badges": "All Badges",
+        "no_achievements": "No achievements yet",
+        "no_achievements_desc": "Start training to earn badges!",
+        "keep_training": "Keep training to unlock!"
     },
     "stats": {
         "title": "{{name}}'s Stats",

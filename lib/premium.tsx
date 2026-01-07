@@ -18,7 +18,8 @@ export const PREMIUM_STORAGE_KEY = 'dogtrainer_is_premium';
  * This eliminates the race condition where useState(true) conflicted with
  * checkPremiumStatus() reading from AsyncStorage.
  * 
- * TODO(v2): Integrate RevenueCat and restore storage-based premium checks.
+ * 
+ * // Note: RevenueCat integration planned for future release
  */
 export function PremiumProvider({ children }: { children: React.ReactNode }) {
   // V1: Everyone is premium - no loading, no async checks, no race conditions
@@ -38,7 +39,7 @@ export function PremiumProvider({ children }: { children: React.ReactNode }) {
 
   const resetPremium = async (): Promise<void> => {
     // V1: No-op, everyone stays premium
-    console.log('[V1] resetPremium called but ignored - everyone is premium');
+    // V1: No-op, everyone stays premium
   };
 
   return (

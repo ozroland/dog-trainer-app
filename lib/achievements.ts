@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { Achievement } from '../types';
 import { calculateStreak } from './trainingUtils';
+import { Logger } from './logger';
 
 interface AchievementCheckResult {
     newlyUnlocked: Achievement[];
@@ -114,7 +115,7 @@ export async function checkAndUnlockAchievements(dogId: string): Promise<Achieve
             .eq('dog_id', dogId);
 
         if (photosError) {
-            console.log('Photos table may not exist yet:', photosError.message);
+            Logger.debug('Achievements', 'Photos table may not exist yet:', photosError.message);
         }
 
         const photoCount = photosData?.length || 0;
@@ -169,14 +170,14 @@ export async function checkAndUnlockAchievements(dogId: string): Promise<Achieve
                     shouldUnlock = hasLateTraining;
                     break;
 
-                case 'photo_count':
-                    // Skip for v1 - would need photos table
-                    shouldUnlock = photoCount >= achievement.condition_value;
-                    break;
-
                 case 'specific_lesson':
                     // Check if a specific lesson ID was completed
                     shouldUnlock = completedLessonIds.has(String(achievement.condition_value));
+                    break;
+
+                case 'all_lessons_complete':
+                    // Check if user has completed ALL available lessons
+                    shouldUnlock = lessons && completedLessonsCount >= lessons.length;
                     break;
             }
 
@@ -195,7 +196,7 @@ export async function checkAndUnlockAchievements(dogId: string): Promise<Achieve
             }
         }
     } catch (error) {
-        console.error('Error checking achievements:', error);
+        Logger.error('Achievements', 'Error checking achievements:', error);
     }
 
     return { newlyUnlocked };

@@ -126,21 +126,7 @@ export default function ProfileScreen() {
                     subtitle={email || t('profile.your_account')}
                 />
 
-                {/* User Card */}
-                <View className="mx-4 mb-6 bg-gradient-to-br rounded-3xl p-5 border border-indigo-500/20" style={{ backgroundColor: 'rgba(99, 102, 241, 0.1)' }}>
-                    <View className="flex-row items-center">
-                        <View className="w-16 h-16 rounded-full bg-indigo-500/30 items-center justify-center mr-4">
-                            <Ionicons name="person" size={32} color="#818cf8" />
-                        </View>
-                        <View className="flex-1">
-                            <Text className="text-white text-xl font-bold">{email ? email.split('@')[0] : 'User'}</Text>
-                            <Text className="text-indigo-300 text-sm">{email}</Text>
-                            <View className="flex-row items-center mt-1">
-                                <Text className="text-indigo-400 text-sm font-semibold">{dogs.length} {dogs.length === 1 ? t('profile.dog') || 'dog' : t('profile.dogs') || 'dogs'}</Text>
-                            </View>
-                        </View>
-                    </View>
-                </View>
+
 
                 {/* My Dogs Section */}
                 <View className="px-4 mb-6">

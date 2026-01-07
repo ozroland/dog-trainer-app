@@ -1,8 +1,3 @@
--- ============================================
--- Advanced Leaderboard Features
--- Run this in Supabase SQL Editor
--- ============================================
-
 -- 1. DOG FOLLOWS / RIVALRY SYSTEM
 -- Allows users to follow/track specific dogs
 CREATE TABLE IF NOT EXISTS dog_follows (
