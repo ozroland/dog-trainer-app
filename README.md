@@ -9,10 +9,10 @@ DogTrainerApp is designed to help dog owners structure their training, track dai
 ## Screenshots
 
 <p align="center">
-  <img src="IMG_9624.PNG" width="200" alt="Home Screen"/>
-  <img src="IMG_9625.PNG" width="200" alt="Training Lessons"/>
-  <img src="IMG_9626.PNG" width="200" alt="Leaderboard"/>
-  <img src="IMG_9627.PNG" width="200" alt="Badges"/>
+  <img src="IMG_9629.PNG" width="200" alt="Home Screen"/>
+  <img src="IMG_9630.PNG" width="200" alt="Training Lessons"/>
+  <img src="IMG_9631.PNG" width="200" alt="Leaderboard"/>
+  <img src="IMG_9633.PNG" width="200" alt="Badges"/>
 </p>
 
 ## Key Features
