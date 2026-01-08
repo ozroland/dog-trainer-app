@@ -6,6 +6,15 @@ A comprehensive, gamified React Native application for dog training, activity tr
 
 DogTrainerApp is designed to help dog owners structure their training, track daily activities, and stay motivated through gamification. Users can follow structured lesson plans, track walks with GPS, earn achievements, and compete on leaderboards. The app features robust offline support, ensuring walk data is never lost even without an internet connection.
 
+## Screenshots
+
+<p align="center">
+  <img src="IMG_9624.PNG" width="200" alt="Home Screen"/>
+  <img src="IMG_9625.PNG" width="200" alt="Training Lessons"/>
+  <img src="IMG_9626.PNG" width="200" alt="Leaderboard"/>
+  <img src="IMG_9627.PNG" width="200" alt="Badges"/>
+</p>
+
 ## Key Features
 
 - ** Structured Training**: Progressive lesson plans (Beginner, Intermediate, Advanced) with unlockable tiers.
